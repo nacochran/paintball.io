@@ -1,6 +1,5 @@
-export default class TimeManager {
-  static intervals = [];
 
+class TimedInterval {
   constructor(config) {
     this.callback = config.callback || function () { };
     this.time = 0;
@@ -8,26 +7,33 @@ export default class TimeManager {
     this.onFinish = config.onFinish || function () { };
   }
 
-  static runIntervals() {
-    for (let i = 0; i < TimeManager.intervals.length; i++) {
-      const currentInterval = TimeManager.intervals[i];
-      currentInterval.execute(i);
-    }
-  }
-
-  static addInterval(interval) {
-    TimeManager.intervals.push(new TimeManager({
-      callback: interval.callback,
-      duration: interval.duration,
-      onFinish: interval.onFinish
-    }));
-  }
-
-  execute(index) {
+  execute() {
     this.callback();
-    if (++this.time >= this.duration) {
+    this.time++;
+    if (this.time >= this.duration) {
       this.onFinish();
-      TimeManager.intervals.splice(index, 1);
+      return true;
     }
+    return false;
+  }
+}
+
+
+export default class TimeManager {
+  constructor() {
+    this.intervals = [];
+  }
+
+  runIntervals() {
+    for (let i = this.intervals.length - 1; i >= 0; i--) {
+      const currentInterval = this.intervals[i];
+      if (currentInterval.execute()) {
+        this.intervals.splice(i, 1);
+      }
+    }
+  }
+
+  addInterval(config) {
+    this.intervals.push(new TimedInterval(config));
   }
 }
