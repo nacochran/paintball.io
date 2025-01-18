@@ -1,11 +1,10 @@
 import './style.css'
-import app from "./setup.js";
+import app from "./App.js";
 
-app.setup();
+// resize UI canvas
+const canvas = document.getElementById('ui-canvas');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-// used to display animated objects in an event loop
-function draw() {
-  requestAnimationFrame(draw);
-  app.displayScene();
-}
-draw();
+// run app
+app();
