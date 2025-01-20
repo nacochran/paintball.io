@@ -24,6 +24,7 @@ export default class Player extends PhysicsEntity {
   // Handle sprinting
   sprint() {
     console.log('Player is sprinting');
+    this.isSprinting = true;
   }
 
   // Handle jumping
@@ -34,11 +35,13 @@ export default class Player extends PhysicsEntity {
   // Handle crouching
   crouch() {
     console.log("Player is crouching");
+    this.isCrouching = true;
   }
 
   // Handle sliding
   slide() {
     console.log("Player is sliding!");
+    this.isSliding = true;
   }
 
   // calls any methods we want to update in the game loop
@@ -46,7 +49,6 @@ export default class Player extends PhysicsEntity {
     console.log("Testing Player:");
     //console.log("x:", this.x, "y:", this.y, "z:", this.z);
 
-    // Example input handling (replace with your inputManager logic later)
     if (keys.pressed("W")) this.move("forward");
     if (keys.pressed("S")) this.move("backward");
     if (keys.pressed("A")) this.move("left");
@@ -59,5 +61,8 @@ export default class Player extends PhysicsEntity {
 
     // Sliding logic
     if (this.isSprinting && this.isCrouching) this.slide();
+    this.isSliding = false;
+    this.isCrouching = false;
+    this.isSprinting = false;
   }
 }
