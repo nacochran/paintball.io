@@ -19,7 +19,7 @@ class Game {
     // Add ambient light
     const ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
-    scene.background = new THREE.Color(0x87ceeb); // Sky-blue background
+    scene.background = new THREE.Color(0x87ceeb); // Sky-blue
 
     // Add directional light
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -27,7 +27,7 @@ class Game {
     scene.add(directionalLight);
 
     // Create the player
-    this.player = new Player({ x: 0, y: 1, z: 8 }); // Player is placed closer to the camera but visible
+    this.player = new Player({ x: 0, y: 1, z: 8 });
     this.entities.push(this.player);
 
     // Create ground
