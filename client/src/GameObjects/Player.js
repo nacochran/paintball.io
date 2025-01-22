@@ -86,7 +86,7 @@ export default class Player extends PhysicsEntity {
     this.handleMovement(deltaTime);
 
     // Apply physics updates (gravity, friction, etc.)
-    super.update(deltaTime);
+    this.updatePhysics(deltaTime);
 
     // Prevent player from falling below the ground
     if (this.y < 0) {
