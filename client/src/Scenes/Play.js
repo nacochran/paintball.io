@@ -31,7 +31,7 @@ class Game {
     this.entities.push(this.player);
 
     // Create ground
-    const groundGeometry = new THREE.PlaneGeometry(20, 20);
+    const groundGeometry = new THREE.PlaneGeometry(50, 50);
     const groundMaterial = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
     const ground = new THREE.Mesh(groundGeometry, groundMaterial);
     ground.rotation.x = -Math.PI / 2; // Rotate to lay flat
@@ -44,6 +44,12 @@ class Game {
     this.player.mesh = new THREE.Mesh(playerGeometry, playerMaterial);
     this.player.mesh.position.set(this.player.x, this.player.y, this.player.z);
     scene.add(this.player.mesh);
+
+    //Test Obstacle
+    const obstacleGeometry = new THREE.BoxGeometry(5, 5, 5);
+    const obstacleMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const obstacleBox = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
+    scene.add(obstacleBox);
 
     // Initial camera setup
     this.updateCameraPosition();
@@ -105,6 +111,8 @@ const playScene = {
   },
   display: function () {
     game.play();
+
+    
   },
   buttons: [
     new Button({
