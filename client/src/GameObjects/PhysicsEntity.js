@@ -1,276 +1,120 @@
-/**
 import Entity from "./Entity.js";
+import { Vec3 } from "../utils/vector.js";
 
 export default class PhysicsEntity extends Entity {
   constructor(config) {
     super(config);
 
     // Physics properties
-    this.velocity = { x: 0, y: 0, z: 0 }; // Current velocity
-    this.acceleration = { x: 0, y: 0, z: 0 }; // Current acceleration
-    this.friction = 5; // Friction value (reduces velocity over time)
-    this.gravity = -9.8; // Gravity (default downward force in the y-axis)
-    this.mass = 1; // Mass of the object (affects forces)
-    this.onGround = true; // Is the object on the ground?
-
-    // Ground level
-    this.groundY = config.groundY !== undefined ? config.groundY : 0; // Default ground level is 0
+    this.velocity = new Vec3(0, 0, 0); // Current velocity
+    this.acceleration = new Vec3(0, 0, 0); // Current acceleration
+    this.appliedForces = new Vec3(0, 0, 0); // Net force applied to the entity
+    this.mass = config.mass || 1; // Mass of the object
+    this.terminalVelocity = config.terminalVelocity || 50; // Max falling rate
+    this.onPlatform = null; // Reference to platform or null
+    this.onTime = 0; // Time entity has been on the platform
 
     // Bounds for limiting movement (optional)
     this.bounds = config.bounds || null; // { minX, maxX, minY, maxY, minZ, maxZ }
   }
 
   /**
-   * Apply a force to the entity
-   * @param {number} fx - Force in the x direction
-   * @param {number} fy - Force in the y direction
-   * @param {number} fz - Force in the z direction
+   * Apply a force to the entity.
+   * @param {Vec3} force - Force vector to apply.
    */
-  /*
-  applyForce(fx, fy, fz) {
-    this.acceleration.x += fx / this.mass;
-    this.acceleration.y += fy / this.mass;
-    this.acceleration.z += fz / this.mass;
+  applyForce(force) {
+    this.appliedForces = this.appliedForces.add(force);
   }
 
   /**
-   * Update physics properties such as velocity and position.
-   * @param {number} deltaTime - Time since the last frame
+   * Apply drag force to the entity.
+   * @param {Entity | null} platform - The platform the entity is on (or null if in air).
    */
-  /*
+  applyDrag(platform) {
+    let dragForce;
+    if (platform) {
+      // Use platform friction if on a platform
+      const friction = platform.friction || 0.1;
+      dragForce = this.velocity.scale(-friction);
+    } else {
+      // Use air friction if in air
+      const airFriction = 0.02;
+      dragForce = this.velocity.scale(-airFriction);
+    }
+    this.applyForce(dragForce);
+  }
+
+  /**
+   * Apply gravity to the entity.
+   */
+  applyGravity() {
+    const G_CONST = -9.8; // Gravitational constant
+    const gravityForce = new Vec3(0, G_CONST * this.mass, 0);
+    this.applyForce(gravityForce);
+  }
+
+  /**
+   * Updates physics properties such as velocity and position based on applied forces.
+   * @param {number} deltaTime - Time since the last frame.
+   */
   updatePhysics(deltaTime) {
-    // Apply acceleration to velocity
-    this.velocity.x += this.acceleration.x * deltaTime;
-    this.velocity.y += this.acceleration.y * deltaTime;
-    this.velocity.z += this.acceleration.z * deltaTime;
+    // Update acceleration based on applied forces
+    this.acceleration = this.appliedForces.scale(1 / this.mass);
 
-    // Apply friction (damping) to velocity
-    this.velocity.x -= this.velocity.x * this.friction * deltaTime;
-    this.velocity.z -= this.velocity.z * this.friction * deltaTime;
+    // Update velocity based on acceleration
+    this.velocity = this.velocity.add(this.acceleration.scale(deltaTime));
 
-    // Apply gravity if not on the ground
-    if (!this.onGround) {
-      this.velocity.y += this.gravity * deltaTime;
+    // Clamp velocity to terminal velocity
+    if (this.velocity.y < -this.terminalVelocity) {
+      this.velocity.y = -this.terminalVelocity;
     }
 
     // Update position based on velocity
-    this.x += this.velocity.x * deltaTime;
-    this.y += this.velocity.y * deltaTime;
-    this.z += this.velocity.z * deltaTime;
+    this.position = this.position.add(this.velocity.scale(deltaTime));
 
-    // Reset acceleration for the next frame
-    this.acceleration.x = 0;
-    this.acceleration.y = 0;
-    this.acceleration.z = 0;
-
-    // Handle ground collision
-    this.checkGroundCollision();
-
-    // Collision or bounds checking (if enabled)
-    if (this.bounds) {
-      this.checkBounds();
-    }
+    // Reset applied forces for the next frame
+    this.appliedForces.set(0, 0, 0);
   }
 
   /**
-   * Check for collision with the ground.
-   * If the entity is below the ground level, reset its position and velocity.
+   * Check for and handle collisions with other entities.
+   * @param {Entity[]} entities - List of all entities in the scene.
    */
-  /*
-  checkGroundCollision() {
-    if (this.y <= this.groundY) {
-      this.y = this.groundY; // Reset position to ground level
-      this.velocity.y = 0; // Stop downward velocity
-      this.onGround = true; // Ensure the entity is on the ground
-    } else {
-      this.onGround = false; // Entity is in the air
+  collide(entities) {
+    if (!Array.isArray(entities)) {
+      throw new TypeError("Expected entities to be an array.");
     }
-  }
 
-  /**
-   * Check if the entity is within its bounds and adjust if necessary.
-   */
-  /*
-  checkBounds() {
-    if (this.bounds) {
-      const { minX, maxX, minY, maxY, minZ, maxZ } = this.bounds;
+    for (const entity of entities) {
+      if (entity !== this && this.checkBounds(entity)) {
+        // Handle collision response (simple example: stop motion)
+        this.velocity.set(0, 0, 0);
 
-      if (this.x < minX) {
-        this.x = minX;
-        this.velocity.x = 0;
-      }
-      if (this.x > maxX) {
-        this.x = maxX;
-        this.velocity.x = 0;
-      }
-      if (this.y < minY) {
-        this.y = minY;
-        this.velocity.y = 0;
-        this.onGround = true;
-      }
-      if (this.y > maxY) {
-        this.y = maxY;
-        this.velocity.y = 0;
-      }
-      if (this.z < minZ) {
-        this.z = minZ;
-        this.velocity.z = 0;
-      }
-      if (this.z > maxZ) {
-        this.z = maxZ;
-        this.velocity.z = 0;
+        // Adjust position to prevent overlap (basic example)
+        const overlap = this.position.subtract(entity.position);
+        this.position = this.position.add(overlap.scale(0.5));
       }
     }
   }
 
   /**
    * Main update loop for physics entity.
-   * @param {number} deltaTime - Time since the last frame
+   * @param {number} deltaTime - Time since the last frame.
+   * @param {Entity[]} entities - List of all entities in the scene.
    */
-  /*
-  update(deltaTime) {
+  update(deltaTime, entities) {
+    if (!Array.isArray(entities)) {
+      throw new TypeError("Expected entities to be an array.");
+    }
+
+    if (!this.onPlatform) {
+      this.applyGravity();
+    }
+
+    this.applyDrag(this.onPlatform);
+
     this.updatePhysics(deltaTime);
-  }
-}*/
-import Entity from "./Entity.js";
 
-export default class PhysicsEntity extends Entity {
-  constructor(config) {
-    super(config);
-
-    // Physics properties
-    this.velocity = { x: 0, y: 0, z: 0 }; // Current velocity
-    this.acceleration = { x: 0, y: 0, z: 0 }; // Current acceleration
-    this.friction = 5; // Friction value (reduces velocity over time)
-    this.gravity = -9.8; // Gravity (default downward force in the y-axis)
-    this.mass = 1; // Mass of the object (affects forces)
-    this.onGround = true; // Is the object on the ground?
-
-    // Dimensions of the entity (for edge-based collision)
-    this.size = config.size || { width: 1, height: 1, depth: 1 }; // Default to a unit cube
-
-    // Ground level
-    this.groundY = config.groundY !== undefined ? config.groundY : 0; // Default ground level is 0
-
-    // Bounds for limiting movement (optional)
-    this.bounds = config.bounds || null; // { minX, maxX, minY, maxY, minZ, maxZ }
-  }
-
-  /**
-   * Apply a force to the entity
-   * @param {number} fx - Force in the x direction
-   * @param {number} fy - Force in the y direction
-   * @param {number} fz - Force in the z direction
-   */
-  applyForce(fx, fy, fz) {
-    this.acceleration.x += fx / this.mass;
-    this.acceleration.y += fy / this.mass;
-    this.acceleration.z += fz / this.mass;
-  }
-
-  /**
-   * Update physics properties such as velocity and position.
-   * @param {number} deltaTime - Time since the last frame
-   */
-  updatePhysics(deltaTime) {
-    // Apply acceleration to velocity
-    this.velocity.x += this.acceleration.x * deltaTime;
-    this.velocity.y += this.acceleration.y * deltaTime;
-    this.velocity.z += this.acceleration.z * deltaTime;
-
-    // Apply friction (damping) to velocity
-    this.velocity.x -= this.velocity.x * this.friction * deltaTime;
-    this.velocity.z -= this.velocity.z * this.friction * deltaTime;
-
-    // Apply gravity if not on the ground
-    if (!this.onGround) {
-      this.velocity.y += this.gravity * deltaTime;
-    }
-
-    // Update position based on velocity
-    this.x += this.velocity.x * deltaTime;
-    this.y += this.velocity.y * deltaTime;
-    this.z += this.velocity.z * deltaTime;
-
-    // Reset acceleration for the next frame
-    this.acceleration.x = 0;
-    this.acceleration.y = 0;
-    this.acceleration.z = 0;
-
-    // Handle ground collision
-    this.checkGroundCollision();
-
-    // Collision or bounds checking (if enabled)
-    if (this.bounds) {
-      this.checkBounds();
-    }
-  }
-
-  /**
-   * Check for collision with the ground.
-   * If the entity is below the ground level, reset its position and velocity.
-   */
-  checkGroundCollision() {
-    const bottomEdge = this.y - this.size.height / 2; // Calculate the bottom edge of the cube
-    if (bottomEdge <= this.groundY) {
-      this.y = this.groundY + this.size.height / 2; // Reset the position to align the bottom edge with the ground
-      this.velocity.y = 0; // Stop downward velocity
-      this.onGround = true; // Ensure the entity is on the ground
-    } else {
-      this.onGround = false; // Entity is in the air
-    }
-  }
-
-  /**
-   * Check if the entity is within its bounds and adjust if necessary.
-   */
-  checkBounds() {
-    if (this.bounds) {
-      const { minX, maxX, minY, maxY, minZ, maxZ } = this.bounds;
-
-      const leftEdge = this.x - this.size.width / 2;
-      const rightEdge = this.x + this.size.width / 2;
-      const frontEdge = this.z - this.size.depth / 2;
-      const backEdge = this.z + this.size.depth / 2;
-
-      // Check X bounds
-      if (leftEdge < minX) {
-        this.x = minX + this.size.width / 2;
-        this.velocity.x = 0;
-      }
-      if (rightEdge > maxX) {
-        this.x = maxX - this.size.width / 2;
-        this.velocity.x = 0;
-      }
-
-      // Check Y bounds
-      if (this.y < minY) {
-        this.y = minY + this.size.height / 2;
-        this.velocity.y = 0;
-        this.onGround = true;
-      }
-      if (this.y > maxY) {
-        this.y = maxY - this.size.height / 2;
-        this.velocity.y = 0;
-      }
-
-      // Check Z bounds
-      if (frontEdge < minZ) {
-        this.z = minZ + this.size.depth / 2;
-        this.velocity.z = 0;
-      }
-      if (backEdge > maxZ) {
-        this.z = maxZ - this.size.depth / 2;
-        this.velocity.z = 0;
-      }
-    }
-  }
-
-  /**
-   * Main update loop for physics entity.
-   * @param {number} deltaTime - Time since the last frame
-   */
-  update(deltaTime) {
-    this.updatePhysics(deltaTime);
+    this.collide(entities);
   }
 }

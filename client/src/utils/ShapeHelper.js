@@ -1,150 +1,213 @@
 // Import Three.js
-import * as THREE from 'three';
-import Entity from '../GameObjects/Entity.js';
+import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import StaticEntity from "../GameObjects/StaticEntity.js";
+import PhysicsEntity from "../GameObjects/PhysicsEntity.js";
 
-class ShapeHelper extends Entity {
-    /**
-     * Constructor to create a 3D shape.
-     * @param {string} shapeType - The type of shape (e.g., 'box', 'sphere', 'cone', 'cylinder', etc.).
-     * @param {Object} options - Options for the shape geometry.
-     * @param {Object} materialOptions - Options for the material.
-     * @param {Object} config - Configuration for the Entity base class.
-     */
-    constructor(shapeType, options = {}, materialOptions = {}, config = {}) {
-        super(config);
-        this.shapeType = shapeType.toLowerCase();
-        this.options = options;
-        this.materialOptions = materialOptions;
-        this.mesh = this.createShape();
-        this.setPosition(this.x || 0, this.y || 0, this.z || 0);
+class ShapeHelper {
+  /**
+   * Creates a static shape and adds it to the scene.
+   * @param {string} shapeType - The type of shape (e.g., 'box', 'sphere', 'plane').
+   * @param {Object} config - Configuration for the shape (size, position, material, etc.).
+   * @param {THREE.Scene} scene - The Three.js scene to add the shape to.
+   * @returns {StaticEntity} - The created StaticEntity instance.
+   */
+  static ShapeBuilderStatic(shapeType, config, scene) {
+    const staticEntity = new StaticEntity(config);
+
+    // Create geometry based on shape type
+    const geometry = ShapeHelper.createGeometry(shapeType, config.size || {});
+    const material = new THREE.MeshStandardMaterial(config.material || { color: 0xffffff });
+
+    // Create the mesh
+    staticEntity.mesh = new THREE.Mesh(geometry, material);
+    staticEntity.mesh.position.set(
+      config.position?.x || 0,
+      config.position?.y || 0,
+      config.position?.z || 0
+    );
+    staticEntity.mesh.rotation.set(
+      config.rotation?.x || 0,
+      config.rotation?.y || 0,
+      config.rotation?.z || 0
+    );
+    staticEntity.mesh.scale.set(
+      config.scale?.x || 1,
+      config.scale?.y || 1,
+      config.scale?.z || 1
+    );
+
+    // Enable shadows
+    staticEntity.mesh.castShadow = true;
+    staticEntity.mesh.receiveShadow = true;
+
+    // Add to scene
+    staticEntity.addToScene(scene);
+    return staticEntity;
+  }
+
+  /**
+   * Creates a physics-enabled shape and adds it to the scene.
+   * @param {string} shapeType - The type of shape (e.g., 'box', 'sphere').
+   * @param {Object} config - Configuration for the shape (size, position, material, etc.).
+   * @param {THREE.Scene} scene - The Three.js scene to add the shape to.
+   * @returns {PhysicsEntity} - The created PhysicsEntity instance.
+   */
+  static ShapeBuilderPhysics(shapeType, config, scene) {
+    const physicsEntity = new PhysicsEntity(config);
+
+    // Create geometry based on shape type
+    const geometry = ShapeHelper.createGeometry(shapeType, config.size || {});
+    const material = new THREE.MeshStandardMaterial(config.material || { color: 0xffffff });
+
+    // Create the mesh
+    physicsEntity.mesh = new THREE.Mesh(geometry, material);
+    physicsEntity.mesh.position.set(
+      config.position?.x || 0,
+      config.position?.y || 0,
+      config.position?.z || 0
+    );
+    physicsEntity.mesh.rotation.set(
+      config.rotation?.x || 0,
+      config.rotation?.y || 0,
+      config.rotation?.z || 0
+    );
+    physicsEntity.mesh.scale.set(
+      config.scale?.x || 1,
+      config.scale?.y || 1,
+      config.scale?.z || 1
+    );
+
+    // Enable shadows
+    physicsEntity.mesh.castShadow = true;
+    physicsEntity.mesh.receiveShadow = true;
+
+    // Add to scene
+    physicsEntity.addToScene(scene);
+    return physicsEntity;
+  }
+
+  /**
+   * Creates geometry for a given shape type.
+   * @param {string} shapeType - The type of shape to create.
+   * @param {Object} size - Size configuration for the geometry.
+   * @returns {THREE.Geometry} - The created geometry.
+   */
+  static createGeometry(shapeType, size) {
+    switch (shapeType.toLowerCase()) {
+      case "box":
+        return new THREE.BoxGeometry(
+          size.width || 1,
+          size.height || 1,
+          size.depth || 1
+        );
+      case "sphere":
+        return new THREE.SphereGeometry(
+          size.radius || 1,
+          size.widthSegments || 32,
+          size.heightSegments || 16
+        );
+      case "cone":
+        return new THREE.ConeGeometry(
+          size.radius || 1,
+          size.height || 2,
+          size.radialSegments || 32
+        );
+      case "cylinder":
+        return new THREE.CylinderGeometry(
+          size.radiusTop || 1,
+          size.radiusBottom || 1,
+          size.height || 2,
+          size.radialSegments || 32
+        );
+      case "torus":
+        return new THREE.TorusGeometry(
+          size.radius || 1,
+          size.tube || 0.4,
+          size.radialSegments || 16,
+          size.tubularSegments || 100
+        );
+      case "plane":
+        return new THREE.PlaneGeometry(
+          size.width || 1,
+          size.height || 1
+        );
+      default:
+        throw new Error(`Shape type "${shapeType}" is not supported.`);
     }
+  }
 
-    /**
-     * Creates a shape based on the type and options provided.
-     * @returns {THREE.Mesh} - The created 3D shape mesh.
-     */
-    createShape() {
-        let geometry;
+  /**
+   * Imports a 3D model (GLTF/GLB) and adds it to the scene.
+   * @param {string} url - The URL of the model file.
+   * @param {THREE.Scene} scene - The Three.js scene to add the model to.
+   * @param {Object} options - Options for position, rotation, and scale.
+   * @returns {Promise<THREE.Object3D>} - A promise resolving with the loaded model.
+   */
+  static ImportShape(url, scene, options = {}) {
+    return new Promise((resolve, reject) => {
+      const loader = new GLTFLoader();
+      loader.load(
+        url,
+        (gltf) => {
+          const model = gltf.scene;
 
-        // Create geometry based on the shape type
-        switch (this.shapeType) {
-            case 'box':
-                geometry = new THREE.BoxGeometry(
-                    this.options.width || 1,
-                    this.options.height || 1,
-                    this.options.depth || 1
-                );
-                break;
-            case 'sphere':
-                geometry = new THREE.SphereGeometry(
-                    this.options.radius || 1,
-                    this.options.widthSegments || 32,
-                    this.options.heightSegments || 16
-                );
-                break;
-            case 'cone':
-                geometry = new THREE.ConeGeometry(
-                    this.options.radius || 1,
-                    this.options.height || 2,
-                    this.options.radialSegments || 32
-                );
-                break;
-            case 'cylinder':
-                geometry = new THREE.CylinderGeometry(
-                    this.options.radiusTop || 1,
-                    this.options.radiusBottom || 1,
-                    this.options.height || 2,
-                    this.options.radialSegments || 32
-                );
-                break;
-            case 'torus':
-                geometry = new THREE.TorusGeometry(
-                    this.options.radius || 1,
-                    this.options.tube || 0.4,
-                    this.options.radialSegments || 16,
-                    this.options.tubularSegments || 100
-                );
-                break;
-            case 'plane':
-                geometry = new THREE.PlaneGeometry(
-                    this.options.width || 1,
-                    this.options.height || 1
-                );
-                break;
-            default:
-                throw new Error(`Shape type "${this.shapeType}" is not supported.`);
+          // Set position, rotation, and scale
+          model.position.set(
+            options.position?.x || 0,
+            options.position?.y || 0,
+            options.position?.z || 0
+          );
+
+          model.rotation.set(
+            options.rotation?.x || 0,
+            options.rotation?.y || 0,
+            options.rotation?.z || 0
+          );
+
+          model.scale.set(
+            options.scale?.x || 1,
+            options.scale?.y || 1,
+            options.scale?.z || 1
+          );
+
+          // Enable shadows
+          model.traverse((child) => {
+            if (child.isMesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+            }
+          });
+
+          // Add to the scene
+          scene.add(model);
+          resolve(model);
+        },
+        undefined,
+        (error) => {
+          reject(new Error(`Failed to load GLTF model: ${error.message}`));
         }
-
-        // Create a material
-        const material = new THREE.MeshStandardMaterial({
-            color: this.materialOptions.color || 0xffffff,
-            wireframe: this.materialOptions.wireframe || false,
-            ...this.materialOptions
-        });
-
-        // Return the mesh
-        return new THREE.Mesh(geometry, material);
-    }
-
-    /**
-     * Adds the created mesh to a scene.
-     */
-    addToScene(scene) {
-        if (!(scene instanceof THREE.Scene)) {
-            throw new Error('Invalid scene provided.');
-        }
-        scene.add(this.mesh);
-    }
-
-    /**
-     * Updates the position of the shape.
-     * @param {number} x - The X-coordinate.
-     * @param {number} y - The Y-coordinate.
-     * @param {number} z - The Z-coordinate.
-     */
-    setPosition(x, y, z) {
-        this.mesh.position.set(x, y, z);
-    }
-
-    /**
-     * Updates the rotation of the shape.
-     * @param {number} x - The X rotation (in radians).
-     * @param {number} y - The Y rotation (in radians).
-     * @param {number} z - The Z rotation (in radians).
-     */
-    setRotation(x, y, z) {
-        this.mesh.rotation.set(x, y, z);
-    }
-
-    /**
-     * Updates the scale of the shape.
-     * @param {number} x - The scale factor along the X-axis.
-     * @param {number} y - The scale factor along the Y-axis.
-     * @param {number} z - The scale factor along the Z-axis.
-     */
-    setScale(x, y, z) {
-        this.mesh.scale.set(x, y, z);
-    }
-
-    /**
-     * Updates the entity (placeholder for custom update logic).
-     */
-    update() {
-        // Custom update logic can be added here
-    }
+      );
+    });
+  }
 }
 
-// Example Usage
+// Nathan (and myself for later) this is an example on how to use the ImportShape() method.
 /*
-// import { Scene } from 'three';
-const scene = new THREE.Scene();
+--------------------------------------------------------------------------------------------
+    const modelURL = "./path/to/model.glb"; // Replace with the actual path to your model
+    ShapeHelper.ImportShape(modelURL, scene, {
+    position: { x: 0, y: 0, z: 0 },
+    rotation: { x: 0, y: Math.PI / 4, z: 0 },
+    scale: { x: 2, y: 2, z: 2 },
+    }).then((model) => {
+    console.log("Model loaded:", model);
 
-// Create a box and add it to the scene
-const box = new ShapeHelper('box', { width: 2, height: 2, depth: 2 }, { color: 0x00ff00 }, { x: 0, y: 1, z: 0 });
-box.addToScene(scene);
-
-// Create a sphere and add it to the scene
-const sphere = new ShapeHelper('sphere', { radius: 1 }, { color: 0xff0000 }, { x: 3, y: 1, z: 0 });
-sphere.addToScene(scene);
+    // Optional: Add additional logic after loading the model
+    }).catch((error) => {
+    console.error("Failed to load model:", error);
+    });
+--------------------------------------------------------------------------------------------
 */
+
 export default ShapeHelper;
