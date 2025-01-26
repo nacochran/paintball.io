@@ -116,17 +116,4 @@ ShapeBuilder.registerShape('sphere', (size) => {
   return new THREE.Mesh(geometry, material);
 });
 
-// // Example usage:
-// const scene = new THREE.Scene();
-
-// // Create a cube shape
-// const cubeShape = new Shape('cube', { width: 2, height: 2, depth: 2 }, new THREE.Vector3(0, 0, 0));
-// scene.add(cubeShape.mesh);
-
-
-// // Create a sphere shape
-// const sphereShape = new Shape('sphere', { radius: 1 }, new THREE.Vector3(3, 0, 0));
-// scene.add(sphereShape.mesh);
-
-
 export { ShapeBuilder, Shape };
