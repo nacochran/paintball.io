@@ -24,24 +24,33 @@ sceneManager.addScene("menu", menuScene);
 sceneManager.addScene("play", playScene);
 sceneManager.setScene("play");
 
-// Setup app runtime loop
-function app() {
-  // clear UI canvas
+let lastFrameTime = 0; // Tracks the time of the last frame
+
+function app(currentTime) {
+  // Calculate delta time (in seconds)
+  const deltaTime = (currentTime - lastFrameTime) / 1000;
+  lastFrameTime = currentTime;
+
+  // Clear UI canvas
   const ctx = UICanvas.getContext('2d');
   ctx.clearRect(0, 0, UICanvas.width, UICanvas.height);
 
-  // reset mouse cursor to default
+  // Reset mouse cursor to default
   mouse.setCursor('default');
 
+  // Update and render the scene
+  sceneManager.displayScene(deltaTime);
 
-  sceneManager.displayScene();
+  // Run time intervals
+  timeManager.runIntervals(deltaTime);
 
-  // run time intervals
-  timeManager.runIntervals();
-
-  // loop to next iteration
+  // Queue the next frame
   requestAnimationFrame(app);
 }
+
+// Start the animation loop
+requestAnimationFrame(app);
+
 
 keys.handleEvents();
 mouse.handleEvents();
