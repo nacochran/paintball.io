@@ -3,6 +3,7 @@ import Button from "../EventObjects/Button.js";
 import { mouse, keys, sceneManager, UICanvas } from "../Globals.js";
 import Player from "../GameObjects/Player.js";
 import Block from "../GameObjects/Block.js";
+import { Shape, ShapeBuilder } from "../utils/ShapeHelper.js";
 
 // forward declare variables
 let scene, camera, renderer;
@@ -54,12 +55,28 @@ class Game {
       this.entities.push(b1);
     }
 
+    // Imports Custom Shape
+    const testImportShape = new Shape({
+      type: 'gltf',
+      url: './assets/gltf/low_poly_building/scene.gltf', // Absolute path to your glTF file
+      size: { width: 50, height: 50, depth: 50 }, // Optional scaling
+      position: new THREE.Vector3(5, 5, 5), // Initial position
+    });
+    //this.entities.push(testImportShape); breaks and does not load but error handling allows game to run anywasy
+    scene.add(testImportShape.mesh);
+
     ///////////////////////////////////////////////
     // Loop over entities and add each of their  //
     // shapes' meshes to the scene               //
     ///////////////////////////////////////////////
+
+    // I added functionality to see if adding something to the scene didn't have a shape or mesh
     this.entities.forEach(entity => {
-      scene.add(entity.shape.mesh);
+      if (entity.shape && entity.shape.mesh) {
+        scene.add(entity.shape.mesh);
+      } else {
+        console.warn("Entity does not have a valid shape or mesh:", entity);
+      }
     });
 
     // Initial camera setup
