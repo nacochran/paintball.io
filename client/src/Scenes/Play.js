@@ -18,6 +18,9 @@ class Game {
   }
 
   setup() {
+    this.entities = [];
+
+
     // Add ambient light
     const ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
