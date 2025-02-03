@@ -90,6 +90,8 @@ class ShapeBuilder {
   static registerShape(type, shapeMethod) {
     ShapeBuilder.shapes[type] = shapeMethod;
   }
+
+
 }
 
 // Register default shapes (cube and sphere)
@@ -111,7 +113,7 @@ ShapeBuilder.registerShape('cube', (config) => {
 });
 
 ShapeBuilder.registerShape('sphere', (size) => {
-  const geometry = new THREE.SphereGeometry(size.radius);
+  const geometry = new THREE.SphereGeometry(size.radius); 
   const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
   return new THREE.Mesh(geometry, material);
 });
