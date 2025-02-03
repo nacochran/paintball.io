@@ -1,7 +1,6 @@
 import PhysicsEntity from "./PhysicsEntity.js";
 import { mouse, keys, sceneManager } from "../Globals.js";
 import { Shape } from "../utils/ShapeHelper.js";
-import { Vec3 } from "../utils/vector.js";
 import { Timer } from 'three/addons/misc/Timer.js';
 import * as THREE from 'three';
 
