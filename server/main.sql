@@ -5,10 +5,7 @@ USE paintball_db;
 
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(200) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE
 );
-
-INSERT INTO users (name, email) VALUES 
-('John Doe', 'john@example.com'), 
-('Jane Smith', 'jane@example.com');
