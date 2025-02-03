@@ -1,4 +1,3 @@
-import { Vec3 } from "../utils/vector.js";
 import * as THREE from 'three';
 
 export default class Entity {
