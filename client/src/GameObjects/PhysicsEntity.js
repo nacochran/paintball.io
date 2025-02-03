@@ -1,22 +1,26 @@
 import Entity from "./Entity.js";
 import { Vec3 } from "../utils/vector.js";
+import { Timer } from 'three/addons/misc/Timer.js';
+import * as THREE from 'three';
 
 export default class PhysicsEntity extends Entity {
   constructor(config) {
     super(config);
 
-    this.velocity = new Vec3(0, 0, 0);
-    this.acceleration = new Vec3(0, 0, 0);
-    this.appliedForces = new Vec3(0, 0, 0);
+    this.velocity = new THREE.Vector3(0, 0, 0);
+    this.acceleration = new THREE.Vector3(0, 0, 0);
+    this.appliedForces = new THREE.Vector3(0, 0, 0);
     this.mass = config.mass || 1;
     this.terminalVelocity = config.terminalVelocity || 50; // Max falling rate
     this.onPlatform = null; // Reference to platform or null
     this.onTime = 0; // Time entity has been off the platform
+    this.timer = new Timer();
+    this.timer.setTimescale(1);
   }
 
   /**
    * Apply a force to the entity.
-   * @param {Vec3} force - Force vector to apply.
+   * @param {THREE.Vector3} force - Force vector to apply.
    */
   applyForce(force) {
     this.appliedForces = this.appliedForces.add(force);
@@ -27,16 +31,18 @@ export default class PhysicsEntity extends Entity {
    * @param {Entity | null} platform - The platform the entity is on (or null if in air).
    */
   applyDrag(platform) {
+    const MIN_VELOCITY = 0.01; // Ignore drag if velocity is negligible
+    if (this.velocity.length() < MIN_VELOCITY) return;
+  
     let dragForce;
     if (platform) {
-      // Use platform friction if on a platform
-      const friction = platform.friction || 0.1;
-      dragForce = this.velocity.scale(-friction);
+      const friction = platform.friction || .01;
+      dragForce = this.velocity.clone().multiplyScalar(-friction); // Reduce velocity
     } else {
-      // Use air friction if in air
-      const airFriction = 0.02;
-      dragForce = this.velocity.scale(-airFriction);
+      const airFriction = 0.02; // I had to lower this as it was causing issues with movement after some changes
+      dragForce = this.velocity.clone().multiplyScalar(-airFriction);
     }
+  
     this.applyForce(dragForce);
   }
 
@@ -107,26 +113,34 @@ export default class PhysicsEntity extends Entity {
   }
 
   updatePhysics(entities) {
+    this.timer.update();
+    let deltaTime = this.timer.getDelta();
+
+    // Clamp deltaTime to a minimum value
+    deltaTime = Math.max(deltaTime, .6);
+    //console.log("Delta Time:", deltaTime);
+
     // apply some de facto forces
     this.applyGravity();
     this.applyDrag();
+    
 
-    this.acceleration = this.appliedForces.scale(1 / this.mass); // to check
-    this.velocity = this.velocity.add(this.acceleration);
+    this.acceleration = this.appliedForces.multiplyScalar(1 / this.mass); // to check ... a = F/m
+    this.velocity = this.velocity.add(this.acceleration.multiplyScalar(deltaTime));
 
     // Clamp velocity to terminal velocity
     this.velocity.y = (this.velocity.y < -this.terminalVelocity) ? -this.terminalVelocity : this.velocity.y;
 
 
     // update position and check for collisions along each axis
-    this.position.x += this.velocity.x;
+    this.position.x += this.velocity.x * deltaTime;
     this.collideX(entities);
-    this.position.y += this.velocity.y;
+    this.position.y += this.velocity.y * deltaTime;
     this.collideY(entities);
-    this.position.z += this.velocity.z;
+    this.position.z += this.velocity.z * deltaTime;
     this.collideZ(entities);
 
-    if (++this.onTime > 5) {
+    if (++this.onTime > 5 / deltaTime) {
       this.onPlatform = false;
     }
 
