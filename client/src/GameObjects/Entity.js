@@ -1,11 +1,9 @@
-import { Vec3 } from "../utils/vector.js";
-
 export default class Entity {
   constructor(config) {
     this.shapeType = config.shapeType || 'cube';
     this.size = config.size || this.getDefaultSize(this.shapeType);
-    this.position = new Vec3(config.x, config.y, config.z);
-    this.orientation = new Vec3(0, 0, 0);
+    this.position = new THREE.Vector3(config.x, config.y, config.z);
+    this.orientation = new THREE.Vector3(0, 0, 0);
 
     // coefficient of friction
     this.friction = config.friction || 0.5;
