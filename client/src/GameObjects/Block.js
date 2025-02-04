@@ -1,6 +1,5 @@
 import StaticEntity from "./StaticEntity.js";
 import { Shape } from "../utils/ShapeHelper.js";
-import { Vec3 } from "../utils/vector.js";
 
 export default class Block extends StaticEntity {
   constructor(config) {
