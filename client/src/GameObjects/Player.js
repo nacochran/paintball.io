@@ -1,8 +1,9 @@
 import PhysicsEntity from "./PhysicsEntity.js";
 import { mouse, keys, sceneManager } from "../Globals.js";
 import { Shape } from "../utils/ShapeHelper.js";
-import BoundingBox from "../utils/BoundingBox.js";
+import { Timer } from 'three/addons/misc/Timer.js';
 import * as THREE from 'three';
+import BoundingBox from "../utils/BoundingBox.js";
 
 export default class Player extends PhysicsEntity {
   constructor(config) {
@@ -13,8 +14,8 @@ export default class Player extends PhysicsEntity {
     this.state = "idle";
 
     // Movement properties
-    this.walkSpeed = 5;
-    this.sprintSpeed = 10;
+    this.walkSpeed = .1;
+    this.sprintSpeed = 1;
 
     this.shape = new Shape({
       type: 'cube',
@@ -24,19 +25,24 @@ export default class Player extends PhysicsEntity {
     });
     this.shape.attach(this);
 
+    this.timer = new Timer();
+    this.timer.setTimescale(1);
+
     this.boundingBox = new BoundingBox(this);
   }
 
   /**
-   * Handle movement inputs and update velocity.
+   * Handle movement inputs and update velocity with delta time.
+   * @param {Number} deltaTime - The time delta in seconds.
    */
-  handleMovement() {
-    // Set velocity direction
+  handleMovement(deltaTime) {
     let inputVector = new THREE.Vector3(0, 0, 0);
-    if (keys.pressed("W")) inputVector.z -= 1; // Move forward
-    if (keys.pressed("S")) inputVector.z += 1; // Move backward
-    if (keys.pressed("A")) inputVector.x -= 1; // Move left
-    if (keys.pressed("D")) inputVector.x += 1; // Move right 
+
+    // Capture input for movement
+    if (keys.pressed("W")) inputVector.z -= 1; // Forward
+    if (keys.pressed("S")) inputVector.z += 1; // Backward
+    if (keys.pressed("A")) inputVector.x -= 1; // Left
+    if (keys.pressed("D")) inputVector.x += 1; // Right
 
     inputVector.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.rotation.y);
 
@@ -46,14 +52,14 @@ export default class Player extends PhysicsEntity {
       this.rotation.y -= 0.005;
     }
 
+    if (inputVector.length() > 0) {
+      inputVector.normalize(); // Normalize direction
+      const speed = this.state === "sprinting" ? this.sprintSpeed : this.walkSpeed;
 
-
-    // Scale Velocity up to walking/sprinting speed
-    this.state = "walking";
-    const speed = this.state === "sprinting" ? this.sprintSpeed : this.walkSpeed;
-    const velocityChange = inputVector.multiplyScalar(speed);
-    this.velocity.x = velocityChange.x;
-    this.velocity.z = velocityChange.z;
+      // Convert input into a force
+      const movementForce = inputVector.multiplyScalar(speed * this.mass); // F = ma
+      this.applyForce(movementForce);
+    }
 
     // Handle jumping
     if (keys.pressed("Space")) {
@@ -68,9 +74,12 @@ export default class Player extends PhysicsEntity {
    * Main update loop for the player.
    */
   update(entities) {
+    // Time Stuff
+    this.timer.update();
+    const deltaTime = this.timer.getDelta();
 
     // Handle movement
-    this.handleMovement();
+    this.handleMovement(deltaTime);
 
     // Apply physics updates (gravity, friction, etc.)
     this.updatePhysics(entities);

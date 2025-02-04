@@ -1,4 +1,5 @@
 import Entity from "./Entity.js";
+import { Timer } from 'three/addons/misc/Timer.js';
 import * as THREE from 'three';
 
 export default class PhysicsEntity extends Entity {
@@ -12,6 +13,8 @@ export default class PhysicsEntity extends Entity {
     this.terminalVelocity = config.terminalVelocity || 50; // Max falling rate
     this.onPlatform = null; // Reference to platform or null
     this.onTime = 0; // Time entity has been off the platform
+    this.timer = new Timer();
+    this.timer.setTimescale(1);
   }
 
   /**
@@ -27,14 +30,15 @@ export default class PhysicsEntity extends Entity {
    * @param {Entity | null} platform - The platform the entity is on (or null if in air).
    */
   applyDrag(platform) {
+    const MIN_VELOCITY = 0.01; // Ignore drag if velocity is negligible
+    if (this.velocity.length() < MIN_VELOCITY) return;
+
     let dragForce;
     if (platform) {
-      // Use platform friction if on a platform
-      const friction = platform.friction || 0.1;
-      dragForce = this.velocity.clone().multiplyScalar(-friction);
+      const friction = platform.friction || .01;
+      dragForce = this.velocity.clone().multiplyScalar(-friction); // Reduce velocity
     } else {
-      // Use air friction if in air
-      const airFriction = 0.02;
+      const airFriction = 0.02; // I had to lower this as it was causing issues with movement after some changes
       dragForce = this.velocity.clone().multiplyScalar(-airFriction);
     }
 
@@ -51,19 +55,26 @@ export default class PhysicsEntity extends Entity {
   }
 
   updatePhysics() {
+    this.timer.update();
+    let deltaTime = this.timer.getDelta();
+
+    // clamp deltaTime to a minimum value
+    deltaTime = Math.max(deltaTime, 0.6);
+
     // apply some de facto forces
     this.applyGravity();
     this.applyDrag();
 
-    this.acceleration = this.appliedForces.clone().multiplyScalar(1 / this.mass); // to check
-    this.velocity.add(this.acceleration);
+
+    this.acceleration = this.appliedForces.multiplyScalar(1 / this.mass); // to check ... a = F/m
+    this.velocity = this.velocity.add(this.acceleration.multiplyScalar(deltaTime));
 
     // Clamp velocity to terminal velocity
     this.velocity.y = (this.velocity.y < -this.terminalVelocity) ? -this.terminalVelocity : this.velocity.y;
 
-    this.position.add(this.velocity);
+    this.position.add(this.velocity.multiplyScalar(deltaTime));
 
-    if (++this.onTime > 5) {
+    if (++this.onTime > 5 / deltaTime) {
       this.onPlatform = false;
     }
 
