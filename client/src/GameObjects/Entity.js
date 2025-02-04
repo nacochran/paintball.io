@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 export default class Entity {
   constructor(config) {
     this.shapeType = config.shapeType || 'cube';
