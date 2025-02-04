@@ -1,0 +1,9 @@
+<%- include('../partials/header') %>
+
+  <h1>Welcome, <%= user.username %>!</h1>
+  <p>Email: <%= user.email %>
+  </p>
+
+  <a><button onClick="sendPostRequest('logout')">Logout</button></a>
+
+  <%- include('../partials/footer') %>
