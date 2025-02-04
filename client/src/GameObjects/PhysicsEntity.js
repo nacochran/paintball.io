@@ -32,7 +32,7 @@ export default class PhysicsEntity extends Entity {
   applyDrag(platform) {
     const MIN_VELOCITY = 0.01; // Ignore drag if velocity is negligible
     if (this.velocity.length() < MIN_VELOCITY) return;
-  
+
     let dragForce;
     if (platform) {
       const friction = platform.friction || .01;
@@ -41,7 +41,7 @@ export default class PhysicsEntity extends Entity {
       const airFriction = 0.02; // I had to lower this as it was causing issues with movement after some changes
       dragForce = this.velocity.clone().multiplyScalar(-airFriction);
     }
-  
+
     this.applyForce(dragForce);
   }
 
@@ -50,7 +50,7 @@ export default class PhysicsEntity extends Entity {
    */
   applyGravity() {
     const G_CONST = -0.2;
-    const gravityForce = new Vec3(0, G_CONST * this.mass, 0);
+    const gravityForce = new THREE.Vector3(0, G_CONST * this.mass, 0);
     this.applyForce(gravityForce);
   }
 
@@ -122,7 +122,7 @@ export default class PhysicsEntity extends Entity {
     // apply some de facto forces
     this.applyGravity();
     this.applyDrag();
-    
+
 
     this.acceleration = this.appliedForces.multiplyScalar(1 / this.mass); // to check ... a = F/m
     this.velocity = this.velocity.add(this.acceleration.multiplyScalar(deltaTime));
