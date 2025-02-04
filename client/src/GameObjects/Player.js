@@ -87,7 +87,7 @@ export default class Player extends PhysicsEntity {
       this.handleMovement();
 
       // Update physics by one fixed step.
-      this.updatePhysics(this.fixedDelta);
+      this.fixedUpdate();
 
       // Handle collisions.
       this.handleCollisions(entities);
