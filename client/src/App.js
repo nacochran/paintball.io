@@ -11,7 +11,11 @@ keys.register("W", "KeyW");
 keys.register("A", "KeyA");
 keys.register("S", "KeyS");
 keys.register("D", "KeyD");
-keys.register("Space", "Space"); // unnecessary
+keys.register("UP", "ArrowUp");
+keys.register("DOWN", "ArrowDown");
+keys.register("LEFT", "ArrowLeft");
+keys.register("RIGHT", "ArrowRight");
+keys.register("Space", "Space");
 keys.register("Shift", "ShiftLeft");
 keys.register("Ctrl", "ControlLeft");
 
