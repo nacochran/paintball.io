@@ -22,7 +22,7 @@ export default class PhysicsEntity extends Entity {
     this.timer = new Timer();
     this.timer.setTimescale(1);
     this.accumulatedTime = 0;
-    this.fixedDelta = 1 / 120; // 60 physics updates per second
+    this.fixedDelta = 1 / 6000; // 60 physics updates per second
   }
 
   /**
