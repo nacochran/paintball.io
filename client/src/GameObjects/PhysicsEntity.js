@@ -22,7 +22,7 @@ export default class PhysicsEntity extends Entity {
    * @param {THREE.Vector3} force - Force vector to apply.
    */
   applyForce(force) {
-    this.appliedForces = this.appliedForces.add(force);
+    this.appliedForces.add(force);
   }
 
   /**
@@ -54,70 +54,12 @@ export default class PhysicsEntity extends Entity {
     this.applyForce(gravityForce);
   }
 
-  /**
-   * Check for and handle X collisions with other entities.
-   * @param {Entity[]} entities - List of all entities in the scene.
-   */
-  collideX(entities) {
-    if (!Array.isArray(entities)) {
-      throw new TypeError("Expected entities to be an array.");
-    }
-
-    for (const entity of entities) {
-      if (entity !== this && this.checkBounds(entity)) {
-
-        this.velocity.x = 0;
-        if (this.position.x < entity.position.x) {
-          this.position.x = entity.position.x - this.size.width / 2 - entity.size.width / 2;
-        } else {
-          this.position.x = entity.position.x + this.size.width / 2 + entity.size.width / 2;
-        }
-
-      }
-    }
-  }
-  collideY(entities) {
-    if (!Array.isArray(entities)) {
-      throw new TypeError("Expected entities to be an array.");
-    }
-
-    for (const entity of entities) {
-      if (entity !== this && this.checkBounds(entity)) {
-        this.velocity.y = 0;
-        if (this.position.y < entity.position.y) {
-          this.position.y = entity.position.y - this.size.height / 2 - entity.size.height / 2;
-        } else {
-          this.position.y = entity.position.y + this.size.height / 2 + entity.size.height / 2;
-          this.onPlatform = true;
-          this.onTime = 0;
-        }
-      }
-    }
-  }
-  collideZ(entities) {
-    if (!Array.isArray(entities)) {
-      throw new TypeError("Expected entities to be an array.");
-    }
-
-    for (const entity of entities) {
-      if (entity !== this && this.checkBounds(entity)) {
-        this.velocity.z = 0;
-        if (this.position.z < entity.position.z) {
-          this.position.z = entity.position.z - this.size.depth / 2 - entity.size.depth / 2;
-        } else {
-          this.position.z = entity.position.z + this.size.depth / 2 + entity.size.depth / 2;
-        }
-      }
-    }
-  }
-
-  updatePhysics(entities) {
+  updatePhysics() {
     this.timer.update();
     let deltaTime = this.timer.getDelta();
 
-    // Clamp deltaTime to a minimum value
-    deltaTime = Math.max(deltaTime, .6);
-    //console.log("Delta Time:", deltaTime);
+    // clamp deltaTime to a minimum value
+    deltaTime = Math.max(deltaTime, 0.6);
 
     // apply some de facto forces
     this.applyGravity();
@@ -130,14 +72,7 @@ export default class PhysicsEntity extends Entity {
     // Clamp velocity to terminal velocity
     this.velocity.y = (this.velocity.y < -this.terminalVelocity) ? -this.terminalVelocity : this.velocity.y;
 
-
-    // update position and check for collisions along each axis
-    this.position.x += this.velocity.x * deltaTime;
-    this.collideX(entities);
-    this.position.y += this.velocity.y * deltaTime;
-    this.collideY(entities);
-    this.position.z += this.velocity.z * deltaTime;
-    this.collideZ(entities);
+    this.position.add(this.velocity.multiplyScalar(deltaTime));
 
     if (++this.onTime > 5 / deltaTime) {
       this.onPlatform = false;
@@ -146,6 +81,97 @@ export default class PhysicsEntity extends Entity {
     // reset forces
     this.appliedForces.set(0, 0, 0);
   }
+
+  /**
+   * Resolves collisions with entities in the world.
+   */
+  handleCollisions(entities) {
+    const collisions = this.boundingBox.handleCollisions(entities);
+
+    if (collisions.length > 0) {
+      for (const entity of collisions) {
+        this.resolveCollision(entity);
+      }
+    } else {
+      this.onPlatform = false; // If no collisions, player is in the air
+    }
+  }
+
+  /**
+   * Resolves collision with another entity, adjusting position and velocity.
+   */
+  resolveCollision(entity) {
+    const entityBox = entity.boundingBox;
+    const thisBox = this.boundingBox;
+
+    // Calculate the Minimum Translation Vector (MTV) to separate the two OBBs
+    const mtv = this.calculateMTV(thisBox, entityBox);
+
+    if (mtv) {
+      // Ensure MTV pushes away from the other entity
+      const direction = this.position.clone().sub(entity.position).normalize();
+      const pushVector = mtv.dot(direction) < 0 ? mtv.negate() : mtv;
+
+      // Apply MTV to separate the object from the collision
+      this.position.add(pushVector);
+
+      // Zero velocity along the axis of greatest penetration
+      const mtvAxis = pushVector.clone().normalize();
+      if (Math.abs(mtvAxis.x) > Math.abs(mtvAxis.y) && Math.abs(mtvAxis.x) > Math.abs(mtvAxis.z)) {
+        this.velocity.x = 0;
+      } else if (Math.abs(mtvAxis.y) > Math.abs(mtvAxis.z)) {
+        this.velocity.y = 0;
+
+        // If MTV pushes up, the player is on a platform
+        if (thisBox.corners[0].y > entityBox.corners[0].y) {
+          this.onPlatform = true;
+          this.onTime = 0;
+        }
+      } else {
+        this.velocity.z = 0;
+      }
+    }
+  }
+
+
+  /**
+   * Uses SAT to compute the Minimum Translation Vector (MTV) to separate OBBs.
+   */
+  calculateMTV(boxA, boxB) {
+    const axes = boxA.getSeparatingAxes(boxA.corners, boxB.corners);
+    let minOverlap = Infinity;
+    let mtv = null;
+
+    for (const axis of axes) {
+      let minA = Infinity, maxA = -Infinity;
+      let minB = Infinity, maxB = -Infinity;
+
+      for (const corner of boxA.corners) {
+        const projection = corner.dot(axis);
+        minA = Math.min(minA, projection);
+        maxA = Math.max(maxA, projection);
+      }
+
+      for (const corner of boxB.corners) {
+        const projection = corner.dot(axis);
+        minB = Math.min(minB, projection);
+        maxB = Math.max(maxB, projection);
+      }
+
+      if (maxA < minB || maxB < minA) {
+        return null; // No collision, early exit
+      }
+
+      const overlap = Math.min(maxA, maxB) - Math.max(minA, minB);
+      if (overlap < minOverlap) {
+        minOverlap = overlap;
+        mtv = axis.clone().multiplyScalar(overlap);
+      }
+    }
+
+    return mtv;
+  }
+
 
   /**
    * Abstract class
