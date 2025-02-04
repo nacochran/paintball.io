@@ -1,5 +1,6 @@
 // Import Three.js
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 class Shape {
   constructor(config) {
@@ -80,9 +81,7 @@ class Shape {
       this.entity.position.z
     );
   }
-
 }
-
 
 class ShapeBuilder {
   static shapes = {};
@@ -116,6 +115,46 @@ ShapeBuilder.registerShape('sphere', (size) => {
   const geometry = new THREE.SphereGeometry(size.radius); 
   const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
   return new THREE.Mesh(geometry, material);
+});
+
+// Register a new shape type for glTF files
+ShapeBuilder.registerShape('gltf', (config) => {
+  const loader = new GLTFLoader();
+  const group = new THREE.Group(); // Placeholder for the model
+
+  loader.load(
+    config.url,
+    (gltf) => {
+      // Add the loaded model to the group
+      gltf.scene.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      group.add(gltf.scene);
+
+      // Apply scaling and position after loading
+      group.position.set(
+        config.position?.x || 0,
+        config.position?.y || 0,
+        config.position?.z || 0
+      );
+      group.scale.set(
+        config.size?.width || 1,
+        config.size?.height || 1,
+        config.size?.depth || 1
+      );
+
+      console.log("GLTF Model Loaded:", gltf.scene);
+    },
+    undefined, // Optional progress callback
+    (error) => {
+      console.error("Failed to load glTF model:", error);
+    }
+  );
+
+  return group; // Return the group (placeholder initially)
 });
 
 export { ShapeBuilder, Shape };
