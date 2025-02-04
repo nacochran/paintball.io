@@ -15,7 +15,7 @@ export default class Player extends PhysicsEntity {
     this.state = "idle";
 
     // Movement properties
-    this.walkSpeed = 1000;    // Force when walking
+    this.walkSpeed = 10000;    // Force when walking
     this.sprintSpeed = 2000;  // Force when sprinting.
 
     // Ensure a defined rotation (an Euler). This will be used for orienting input.
