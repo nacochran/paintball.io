@@ -22,7 +22,7 @@ export default class PhysicsEntity extends Entity {
     this.timer = new Timer();
     this.timer.setTimescale(1);
     this.accumulatedTime = 0;
-    this.fixedDelta = 1 / 60; // 60 physics updates per second
+    this.fixedDelta = 1 / 120; // 60 physics updates per second
   }
 
   /**
@@ -43,11 +43,11 @@ export default class PhysicsEntity extends Entity {
   
     let dragForce;
     if (platform) {
-      const friction = platform.friction || 0.01;
+      const friction = platform.friction || 0.1;
       dragForce = this.velocity.clone().multiplyScalar(-friction);
     } else {
-      const airFriction = 0.005; // Reduced air friction for smoother jumps
-      dragForce = this.velocity.clone().multiplyScalar(-airFriction);
+      const airFriction = 20 // Reduced air friction for smoother jumps
+      dragForce = this.velocity.clone().normalize().multiplyScalar(-airFriction);
     }
     this.applyForce(dragForce);
   }
