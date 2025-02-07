@@ -168,7 +168,7 @@ ShapeBuilder.registerShape('gltf', (config) => {
             collisionEntity.shape = { mesh: child };
 
             // Create a bounding box for the collision entity
-            collisionEntity.boundingBox = new BoundingBox(collisionEntity);
+            collisionEntity.boundingBox = new BoundingBox(collisionEntity, config.scene);
             console.log("DEBUG: Collision entity bounding box size:", collisionEntity.boundingBox.size);
             console.log("DEBUG: Collision entity bounding box corners:", collisionEntity.boundingBox.corners);
 
@@ -202,14 +202,22 @@ ShapeBuilder.registerShape('gltf', (config) => {
         // *** Update collision entities now that the group transform is applied ***
         group.updateMatrixWorld(true);
         group.childEntities.forEach(collisionEntity => {
-          // Recompute the world position from the collision entity's mesh
+          // Update the world position from the child mesh
           const updatedWorldPos = collisionEntity.shape.mesh.getWorldPosition(new THREE.Vector3());
           collisionEntity.position.copy(updatedWorldPos);
-          // Update its bounding box with the new position (and rotation if needed)
-          if(collisionEntity.boundingBox) {
+          
+          // Update the world rotation from the child mesh
+          const updatedWorldQuat = collisionEntity.shape.mesh.getWorldQuaternion(new THREE.Quaternion());
+          // Convert the quaternion to an Euler angle for the entity
+          collisionEntity.rotation = new THREE.Euler().setFromQuaternion(updatedWorldQuat);
+          
+          // Now update the bounding box so that it uses the new position and rotation
+          if (collisionEntity.boundingBox) {
             collisionEntity.boundingBox.update();
           }
+          
           console.log("DEBUG: Updated collision entity position:", collisionEntity.position);
+          console.log("DEBUG: Updated collision entity rotation:", collisionEntity.rotation);
         });
 
         // If an onLoad callback was provided in the config, call it now.
