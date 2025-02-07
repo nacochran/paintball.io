@@ -22,7 +22,7 @@ export default class PhysicsEntity extends Entity {
     this.timer = new Timer();
     this.timer.setTimescale(1);
     this.accumulatedTime = 0;
-    this.fixedDelta = 1 / 6000; // 60 physics updates per second
+    this.fixedDelta = 1 / 60; // 60 physics updates per second
   }
 
   /**
@@ -56,7 +56,7 @@ export default class PhysicsEntity extends Entity {
    * Apply gravity to the entity.
    */
   applyGravity() {
-    const G_CONST = -500; // units/s² (adjust for future world scale)
+    const G_CONST = -9.8; // units/s² (adjust for future world scale)
     const gravityForce = new THREE.Vector3(0, G_CONST * this.mass, 0);
     this.applyForce(gravityForce);
   }
