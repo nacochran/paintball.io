@@ -6,7 +6,7 @@ export default class Block extends StaticEntity {
   constructor(config) {
     super(config);
 
-    this.size = { width: 50, height: 50, depth: 50 };
+    this.size = { width: 1, height: 1, depth: 1 };
 
     this.shape = new Shape({
       type: 'cube',
