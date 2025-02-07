@@ -7,8 +7,13 @@ export default class BoundingBox {
     this.position = entity.position;
     this.rotation = entity.rotation || new THREE.Vector3(0, 0, 0);
 
-    this.obb = new THREE.Matrix4(); // Transformation matrix for OBB
-    this.corners = []; // Store the 8 corners of the box
+    // The OBB (Oriented Bounding Box) transformation matrix.
+    this.obb = new THREE.Matrix4();
+    this.corners = []; // Will store the 8 world-space corners of the bounding box.
+
+    // Factor to enlarge the bounding box (1.0 = exactly the entity's size; 1.1 = 10% larger)
+    this.enlargeFactor = 1.1;
+
     this.update();
   }
 
@@ -16,41 +21,46 @@ export default class BoundingBox {
    * Updates the bounding box based on the entity's position, size, and rotation.
    */
   update() {
-    // Update size dynamically
+    // Update size dynamically from the entity.
     this.size.set(this.entity.size.width, this.entity.size.height, this.entity.size.depth);
 
-    // Update position
+    // Use the entity's current position.
     this.position = this.entity.position;
 
-    // Compute rotation quaternion
+    // Create a quaternion from the entity's rotation (assuming Euler angles).
     const quaternion = new THREE.Quaternion().setFromEuler(
-      new THREE.Euler(this.entity.rotation.x, this.entity.rotation.y, this.entity.rotation.z)
+      new THREE.Euler(
+        this.entity.rotation.x,
+        this.entity.rotation.y,
+        this.entity.rotation.z
+      )
     );
 
-    // Construct the transformation matrix for OBB
+    // Compose the transformation matrix (position, rotation, and uniform scale of 1).
     this.obb.compose(this.position, quaternion, new THREE.Vector3(1, 1, 1));
 
-    // Compute half-size for box
-    const halfSize = this.size.clone().multiplyScalar(0.5);
+    // Compute half-size, then enlarge it by the desired factor.
+    const factor = this.enlargeFactor;
+    const halfSize = this.size.clone().multiplyScalar(0.5 * factor);
 
-    // Define local-space corners of the box
+    // Define the 8 local-space corners of the box.
     const localCorners = [
       new THREE.Vector3(-halfSize.x, -halfSize.y, -halfSize.z),
-      new THREE.Vector3(halfSize.x, -halfSize.y, -halfSize.z),
-      new THREE.Vector3(-halfSize.x, halfSize.y, -halfSize.z),
-      new THREE.Vector3(halfSize.x, halfSize.y, -halfSize.z),
-      new THREE.Vector3(-halfSize.x, -halfSize.y, halfSize.z),
-      new THREE.Vector3(halfSize.x, -halfSize.y, halfSize.z),
-      new THREE.Vector3(-halfSize.x, halfSize.y, halfSize.z),
-      new THREE.Vector3(halfSize.x, halfSize.y, halfSize.z),
+      new THREE.Vector3( halfSize.x, -halfSize.y, -halfSize.z),
+      new THREE.Vector3(-halfSize.x,  halfSize.y, -halfSize.z),
+      new THREE.Vector3( halfSize.x,  halfSize.y, -halfSize.z),
+      new THREE.Vector3(-halfSize.x, -halfSize.y,  halfSize.z),
+      new THREE.Vector3( halfSize.x, -halfSize.y,  halfSize.z),
+      new THREE.Vector3(-halfSize.x,  halfSize.y,  halfSize.z),
+      new THREE.Vector3( halfSize.x,  halfSize.y,  halfSize.z),
     ];
 
-    // Transform corners to world space using the OBB matrix
+    // Transform the local corners to world space using the OBB matrix.
     this.corners = localCorners.map(corner => corner.applyMatrix4(this.obb));
   }
 
   /**
-   * Checks for collisions with another oriented bounding box.
+   * Checks for collisions with another oriented bounding box using SAT.
    */
   isColliding(otherBoundingBox) {
     return this.satCollision(this.corners, otherBoundingBox.corners);
@@ -64,10 +74,10 @@ export default class BoundingBox {
 
     for (const axis of axes) {
       if (!this.overlapsOnAxis(axis, cornersA, cornersB)) {
-        return false; // A separating axis was found, no collision
+        return false; // Found a separating axis—no collision.
       }
     }
-    return true; // No separating axis found, collision detected
+    return true; // No separating axis found—collision detected.
   }
 
   /**
@@ -76,26 +86,27 @@ export default class BoundingBox {
   getSeparatingAxes(cornersA, cornersB) {
     const axes = [];
 
-    // Compute edge vectors of each box
+    // Compute edge vectors for the first box.
     const edgesA = [
       cornersA[1].clone().sub(cornersA[0]),
       cornersA[2].clone().sub(cornersA[0]),
       cornersA[4].clone().sub(cornersA[0]),
     ];
+    // Compute edge vectors for the second box.
     const edgesB = [
       cornersB[1].clone().sub(cornersB[0]),
       cornersB[2].clone().sub(cornersB[0]),
       cornersB[4].clone().sub(cornersB[0]),
     ];
 
-    // Add the face normals of both boxes
+    // Add the face normals (the edge vectors) of both boxes.
     axes.push(...edgesA, ...edgesB);
 
-    // Compute cross products of all edge pairs (creates more separating axes)
+    // Compute the cross products of each pair of edges from both boxes.
     for (const edgeA of edgesA) {
       for (const edgeB of edgesB) {
         const cross = new THREE.Vector3().crossVectors(edgeA, edgeB);
-        if (cross.lengthSq() > 1e-6) { // Avoid zero-length axes
+        if (cross.lengthSq() > 1e-6) { // Ignore near-zero-length axes.
           axes.push(cross.normalize());
         }
       }
@@ -111,19 +122,20 @@ export default class BoundingBox {
     let minA = Infinity, maxA = -Infinity;
     let minB = Infinity, maxB = -Infinity;
 
-    // Project all corners onto the axis
+    // Project all corners of box A onto the axis.
     for (const corner of cornersA) {
       const projection = corner.dot(axis);
       minA = Math.min(minA, projection);
       maxA = Math.max(maxA, projection);
     }
+    // Project all corners of box B onto the axis.
     for (const corner of cornersB) {
       const projection = corner.dot(axis);
       minB = Math.min(minB, projection);
       maxB = Math.max(maxB, projection);
     }
 
-    // Check for overlap
+    // Check if the projections overlap.
     return maxA >= minB && maxB >= minA;
   }
 
