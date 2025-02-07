@@ -35,7 +35,7 @@ class Game {
     scene.add(directionalLight);
 
     // Create the player
-    const player = new Player({ x: 0, y: 0, z: 0 });
+    const player = new Player({ x: 0, y: 0, z: 0 }, scene);
     this.entities.push(player);
     this.camera.target = player;
 
@@ -64,6 +64,7 @@ class Game {
     const testImportShape = new Shape({
       type: 'gltf',
       url: './assets/gltf/TestLevelOne.glb',
+      scene: scene,
       size: { width: 1, height: 1, depth: 1 },
       position: new THREE.Vector3(5, -50, 5),
       onLoad: (loadedGroup) => {
