@@ -9,19 +9,19 @@ export default class Player extends PhysicsEntity {
     super(config);
 
     // Define player size.
-    this.size = { width: 50, height: 50, depth: 50 };
+    this.size = { width: 1, height: 1, depth: 1 };
 
     // Starting state.
     this.state = "idle";
 
     // Movement properties
-    this.walkSpeed = 10000;    // Force when walking
-    this.sprintSpeed = 2000;  // Force when sprinting.
+    this.walkSpeed = 10    // Force when walking
+    this.sprintSpeed = 20;  // Force when sprinting
 
     // Ensure a defined rotation (an Euler). This will be used for orienting input.
     this.rotation = new THREE.Euler(0, 0, 0);
 
-    // Set up the visual shape.
+    // Set up the visual shape
     this.shape = new Shape({
       type: 'cube',
       size: this.size,

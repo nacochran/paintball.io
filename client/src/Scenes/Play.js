@@ -12,15 +12,17 @@ class Game {
   constructor() {
     // Game objects
     this.entities = [];
+    // For a third-person camera, define the offset in local space relative to the player.
+    // For example: 10 units up and 20 units behind.
     this.camera = {
-      offset: new THREE.Vector3(0, 400, 600),
+      // This offset is in the player's local coordinate space.
+      offset: new THREE.Vector3(0, 10, -20),
       target: null
     };
   }
 
   setup() {
     this.entities = [];
-
 
     // Add ambient light
     const ambientLight = new THREE.AmbientLight(0x404040);
@@ -37,40 +39,47 @@ class Game {
     this.entities.push(player);
     this.camera.target = player;
 
+    /*
     // Create some blocks
     for (let i = 0; i < 20; i++) {
       for (let j = 0; j < 20; j++) {
-        const b0 = new Block({ x: -500 + i * 50, y: -200, z: -500 + j * 50 });
+        const b0 = new Block({ x: -5 + i, y: -20, z: -5 + j});
         this.entities.push(b0);
       }
     }
 
     for (let i = 0; i < 8; i++) {
-      const b1 = new Block({ x: -100 + i * 50, y: -150, z: -100 });
+      const b1 = new Block({ x: -1 + i, y: -15, z: -1});
       this.entities.push(b1);
     }
 
     for (let i = 0; i < 8; i++) {
-      const b1 = new Block({ x: -300 + i * 50, y: -50, z: -200 });
+      const b1 = new Block({ x: -3 + i, y: -5, z: -2});
       this.entities.push(b1);
     }
+    */
 
     // Imports Custom Shape
+    // IMPORTANT: When the model loads, its childEntities array will be populated.
     const testImportShape = new Shape({
       type: 'gltf',
-      url: './assets/gltf/low_poly_building/scene.gltf', // Absolute path to your glTF file
-      size: { width: 50, height: 50, depth: 50 }, // Optional scaling
-      position: new THREE.Vector3(5, 5, 5), // Initial position
+      url: './assets/gltf/TestLevelOne.glb',
+      size: { width: 1, height: 1, depth: 1 },
+      position: new THREE.Vector3(5, -50, 5),
+      onLoad: (loadedGroup) => {
+        console.log("Model fully loaded. Now updating game entities.");
+        if (loadedGroup.childEntities && loadedGroup.childEntities.length) {
+          loadedGroup.childEntities.forEach(entity => {
+            game.entities.push(entity);
+          });
+        }
+      }
     });
-    //this.entities.push(testImportShape); breaks and does not load but error handling allows game to run anywasy
+
+    // Add the loaded group to the scene
     scene.add(testImportShape.mesh);
 
-    ///////////////////////////////////////////////
-    // Loop over entities and add each of their  //
-    // shapes' meshes to the scene               //
-    ///////////////////////////////////////////////
-
-    // I added functionality to see if adding something to the scene didn't have a shape or mesh
+    // Loop over existing entities and add their meshes to the scene
     this.entities.forEach(entity => {
       if (entity.shape && entity.shape.mesh) {
         scene.add(entity.shape.mesh);
@@ -79,27 +88,34 @@ class Game {
       }
     });
 
+    // (Optional duplicate loop removed for clarity.)
+
     // Initial camera setup
     this.updateCameraPosition();
   }
 
   /**
-   * Updates the camera position to follow the player.
+   * Updates the camera position to follow the player in a third-person perspective.
+   * The camera offset is defined in the player's local space. We rotate the offset
+   * by the player's current rotation and add it to the player's world position.
    */
   updateCameraPosition() {
     const player = this.camera.target;
-
-    const targetPosition = new THREE.Vector3(
-      player.position.x + this.camera.offset.x,
-      player.position.y + this.camera.offset.y,
-      player.position.z + this.camera.offset.z
-    );
-
-    // Smoothly interpolate camera position
-    camera.position.lerp(targetPosition, 0.1);
-
-    // Ensure the camera is always looking at the player
-    camera.lookAt(player.shape.mesh.position);
+    
+    // Clone the offset (local space vector) so we don't modify the original.
+    const localOffset = this.camera.offset.clone();
+    
+    // Flip the camera by adding PI (180°) to the player's Y rotation.
+    const rotationY = new THREE.Euler(0, player.rotation.y + Math.PI, 0);
+    localOffset.applyEuler(rotationY);
+    
+    // Set the camera's position to the player's position plus the transformed offset.
+    camera.position.copy(player.position).add(localOffset);
+    
+    // Make the camera look at the player's position (optionally add an upward offset so it looks at the head).
+    const lookAtPos = player.position.clone();
+    lookAtPos.y += 5; // Adjust as needed.
+    camera.lookAt(lookAtPos);
   }
 
   play() {
@@ -108,7 +124,7 @@ class Game {
       entity.update(this.entities);
     });
 
-    // Update the camera position to follow the player
+    // Update the camera position to follow the player from third-person perspective
     this.updateCameraPosition();
 
     // Render the scene
@@ -124,7 +140,12 @@ const playScene = {
   init: function () {
     // Setup Three.js
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      2000
+    );
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
@@ -136,8 +157,6 @@ const playScene = {
   },
   display: function () {
     game.play();
-
-
   },
   buttons: [
     new Button({
@@ -171,6 +190,5 @@ const playScene = {
     })
   ]
 };
-
 
 export default playScene;
