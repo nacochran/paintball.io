@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import BoundingBox from "../utils/BoundingBox.js";
 
 export default class Player extends PhysicsEntity {
-  constructor(config) {
+  constructor(config, scene) {
     super(config);
 
     // Define player size.
@@ -14,14 +14,14 @@ export default class Player extends PhysicsEntity {
     // Starting state.
     this.state = "idle";
 
-    // Movement properties
-    this.walkSpeed = 10    // Force when walking
-    this.sprintSpeed = 20;  // Force when sprinting
+    // Maximum speeds.
+    this.walkSpeed = 10;    // Maximum horizontal speed (walking)
+    this.sprintSpeed = 20;  // Maximum horizontal speed (sprinting)
 
-    // Ensure a defined rotation (an Euler). This will be used for orienting input.
+    // Rotation for orientation.
     this.rotation = new THREE.Euler(0, 0, 0);
 
-    // Set up the visual shape
+    // Set up the visual shape.
     this.shape = new Shape({
       type: 'cube',
       size: this.size,
@@ -30,72 +30,59 @@ export default class Player extends PhysicsEntity {
     });
     this.shape.attach(this);
 
-    // Set up the bounding box for collisions.
-    this.boundingBox = new BoundingBox(this);
+    // Set up the bounding box.
+    this.boundingBox = new BoundingBox(this, scene);
   }
 
   /**
-   * Handle movement input.
-   * Applies a force based on WASD keys and adjusts rotation via LEFT/RIGHT.
+   * Process input to set the wish direction and target speed.
    */
   handleMovement() {
     let inputVector = new THREE.Vector3(0, 0, 0);
-
-    // Collect movement input.
     if (keys.pressed("W")) inputVector.z -= 1;
     if (keys.pressed("S")) inputVector.z += 1;
     if (keys.pressed("A")) inputVector.x -= 1;
     if (keys.pressed("D")) inputVector.x += 1;
 
-    // Rotate the input vector by the player's current Y rotation.
+    // Rotate input to align with the player's current Y rotation.
     inputVector.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.rotation.y);
+
+    if (inputVector.length() > 0) {
+      inputVector.normalize();
+      this.wishDir.copy(inputVector);
+      // Set target speed (you can add a sprint key check if needed).
+      this.targetSpeed = (this.state === "sprinting") ? this.sprintSpeed : this.walkSpeed;
+    } else {
+      this.wishDir.set(0, 0, 0);
+    }
 
     // Handle turning.
     if (keys.pressed("LEFT")) {
-      this.rotation.y += 0.05;  // Increase turn speed if needed.
+      this.rotation.y += 0.01;
     } else if (keys.pressed("RIGHT")) {
-      this.rotation.y -= 0.05;
-    }
-
-    // If there is movement input, apply a force.
-    if (inputVector.length() > 0) {
-      inputVector.normalize();
-      const speed = (this.state === "sprinting") ? this.sprintSpeed : this.walkSpeed;
-      const movementForce = inputVector.multiplyScalar(speed * this.mass);
-      this.applyForce(movementForce);
+      this.rotation.y -= 0.01;
     }
 
     // Handle jumping.
     if (keys.pressed("Space") && this.isGrounded) {
-      console.log("The player is on the ground");
-      this.velocity.y = 400;  // Directly set jump velocity
+      this.velocity.y = 30;  // Set jump impulse.
       this.isGrounded = false;
     }
   }
 
   /**
    * Main update loop for the player.
-   * This function should be called once per frame.
+   * Processes input, updates physics, and handles collisions.
    */
   update(entities) {
-    // Instead of using a separate timer here, we use the inherited fixed-step update.
-    // Accumulate dt and perform one or more fixed updates.
     this.timer.update();
     this.accumulatedTime += this.timer.getDelta();
     while (this.accumulatedTime >= this.fixedDelta) {
-      // Process input and apply forces.
       this.handleMovement();
-
-      // Update physics by one fixed step.
-      this.fixedUpdate();
-
-      // Handle collisions.
+      this.updatePhysics(this.fixedDelta);
       this.handleCollisions(entities);
-
       this.accumulatedTime -= this.fixedDelta;
     }
-
-    // Update the visual representation and bounding box.
     this.shape.update();
     this.boundingBox.update();
   }
