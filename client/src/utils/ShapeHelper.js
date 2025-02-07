@@ -1,6 +1,9 @@
-// Import Three.js
+// Import Three.js and other dependencies
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import BoundingBox from '../utils/BoundingBox.js';
+// Import StaticEntity instead of Entity so that update() is implemented
+import StaticEntity from '../GameObjects/StaticEntity.js';
 
 class Shape {
   constructor(config) {
@@ -35,26 +38,22 @@ class Shape {
 
   /**
    * Precondition: Assumes entity has a position (Vec3), size (Vec3), and orientation (Vec3)
-  **/
+   **/
   attach(entity) {
     this.entity = entity;
   }
 
   /**
-   * @method Update
-   * Precondition: Assumes shape has been attached to entity
-   * Applies transformations to shapes mesh in order to match the attached 
-   * entities position, size, and orientation 
-  **/
+   * Applies transformations to the shape's mesh to match the attached entity's
+   * position, size, and orientation.
+   **/
   update() {
     if (!this.entity) {
       console.error("Shape is not attached to an entity.");
       return;
     }
-
     // Center the mesh at origin
     this.mesh.position.set(0, 0, 0);
-
     // Apply the entity's rotation to the mesh
     if (this.entity.rotation) {
       this.mesh.rotation.set(
@@ -63,7 +62,6 @@ class Shape {
         this.entity.rotation.z
       );
     }
-
     // Apply scale based on the entity's size
     if (this.entity.size) {
       const normalizedSize = this.size;
@@ -73,7 +71,6 @@ class Shape {
         this.entity.size.depth / normalizedSize.depth
       );
     }
-
     // Translate the mesh to the entity's position
     this.mesh.position.set(
       this.entity.position.x,
@@ -89,72 +86,149 @@ class ShapeBuilder {
   static registerShape(type, shapeMethod) {
     ShapeBuilder.shapes[type] = shapeMethod;
   }
-
-
 }
 
 // Register default shapes (cube and sphere)
 ShapeBuilder.registerShape('cube', (config) => {
   const size = config.size;
-
-  // Create geometry
   const geometry = new THREE.BoxGeometry(size.width, size.height, size.depth);
-
-  // Use a material that supports lighting and shading
   const material = new THREE.MeshStandardMaterial({
-    color: config.color || 0xffffff, // Default to white if no color is provided
-    roughness: 0.5, // Adjust roughness (for realism)
-    metalness: 0.5, // Adjust metalness (for shininess)
+    color: config.color || 0xffffff,
+    roughness: 0.5,
+    metalness: 0.5,
   });
-
-  // Create the mesh
   return new THREE.Mesh(geometry, material);
 });
 
-ShapeBuilder.registerShape('sphere', (size) => {
-  const geometry = new THREE.SphereGeometry(size.radius); 
+ShapeBuilder.registerShape('sphere', (config) => {
+  const geometry = new THREE.SphereGeometry(config.size.radius);
   const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
   return new THREE.Mesh(geometry, material);
 });
 
-// Register a new shape type for glTF files
+// Register a new shape type for glTF files with callback and promise support
 ShapeBuilder.registerShape('gltf', (config) => {
   const loader = new GLTFLoader();
-  const group = new THREE.Group(); // Placeholder for the model
+  const group = new THREE.Group();
+  // Attach an array to hold collision entities
+  group.childEntities = [];
 
-  loader.load(
-    config.url,
-    (gltf) => {
-      // Add the loaded model to the group
-      gltf.scene.traverse((child) => {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
+  // Optionally extract an onLoad callback from the config
+  const onLoadCallback = config.onLoad;
+
+  // Create a promise and attach it to the group for async handling
+  group.loadPromise = new Promise((resolve, reject) => {
+    loader.load(
+      config.url,
+      (gltf) => {
+        // Traverse the loaded scene to configure each mesh
+        gltf.scene.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+
+            // Compute bounding box for the mesh's geometry
+            child.geometry.computeBoundingBox();
+            let bbox = child.geometry.boundingBox;
+            let size = new THREE.Vector3();
+            bbox.getSize(size);
+            console.log("DEBUG: Child mesh geometry bounding box:", bbox);
+            console.log("DEBUG: Computed size before padding:", size);
+
+            // Add a little extra “padding”
+            size.addScalar(1);
+            console.log("DEBUG: Size after padding:", size);
+
+            // Scale the computed size by the config's scale factors
+            const scaleX = (config.size && config.size.width) || 1;
+            const scaleY = (config.size && config.size.height) || 1;
+            const scaleZ = (config.size && config.size.depth) || 1;
+            size.x *= scaleX;
+            size.y *= scaleY;
+            size.z *= scaleZ;
+            console.log("DEBUG: Size after applying config scale:", size);
+
+            // Get the mesh's world position (at load time)
+            const worldPos = new THREE.Vector3();
+            child.getWorldPosition(worldPos);
+            console.log("DEBUG: Child world position:", worldPos);
+
+            // Create a new collision entity using StaticEntity
+            const collisionEntity = new StaticEntity({
+              x: worldPos.x,
+              y: worldPos.y,
+              z: worldPos.z,
+              shapeType: 'cube',
+              size: { width: size.x, height: size.y, depth: size.z },
+              isCollidable: true
+            });
+            console.log("DEBUG: Collision entity created with size:", collisionEntity.size, "and position:", collisionEntity.position);
+
+            // Assign the loaded mesh as the collision entity's shape
+            collisionEntity.shape = { mesh: child };
+
+            // Create a bounding box for the collision entity
+            collisionEntity.boundingBox = new BoundingBox(collisionEntity);
+            console.log("DEBUG: Collision entity bounding box size:", collisionEntity.boundingBox.size);
+            console.log("DEBUG: Collision entity bounding box corners:", collisionEntity.boundingBox.corners);
+
+            // Store the new collision entity for later use
+            group.childEntities.push(collisionEntity);
+          }
+        });
+
+        // Debug: log group details from config
+        console.log("DEBUG: Config position:", config.position);
+        console.log("DEBUG: Config scale (size):", config.size);
+        
+        // Add the loaded scene to our group
+        group.add(gltf.scene);
+        // Apply position and scaling from config to the group
+        group.position.set(
+          (config.position && config.position.x) || 0,
+          (config.position && config.position.y) || 0,
+          (config.position && config.position.z) || 0
+        );
+        group.scale.set(
+          (config.size && config.size.width) || 1,
+          (config.size && config.size.height) || 1,
+          (config.size && config.size.depth) || 1
+        );
+
+        console.log("DEBUG: Final group position:", group.position);
+        console.log("DEBUG: Final group scale:", group.scale);
+        console.log("DEBUG: Final glTF scene:", gltf.scene);
+
+        // *** Update collision entities now that the group transform is applied ***
+        group.updateMatrixWorld(true);
+        group.childEntities.forEach(collisionEntity => {
+          // Recompute the world position from the collision entity's mesh
+          const updatedWorldPos = collisionEntity.shape.mesh.getWorldPosition(new THREE.Vector3());
+          collisionEntity.position.copy(updatedWorldPos);
+          // Update its bounding box with the new position (and rotation if needed)
+          if(collisionEntity.boundingBox) {
+            collisionEntity.boundingBox.update();
+          }
+          console.log("DEBUG: Updated collision entity position:", collisionEntity.position);
+        });
+
+        // If an onLoad callback was provided in the config, call it now.
+        if (onLoadCallback) {
+          onLoadCallback(group);
         }
-      });
-      group.add(gltf.scene);
 
-      // Apply scaling and position after loading
-      group.position.set(
-        config.position?.x || 0,
-        config.position?.y || 0,
-        config.position?.z || 0
-      );
-      group.scale.set(
-        config.size?.width || 1,
-        config.size?.height || 1,
-        config.size?.depth || 1
-      );
+        // Resolve the promise, indicating the model has finished loading.
+        resolve(group);
+      },
+      undefined, // Optional progress callback
+      (error) => {
+        console.error("Failed to load glTF model:", error);
+        reject(error);
+      }
+    );
+  });
 
-      console.log("GLTF Model Loaded:", gltf.scene);
-    },
-    undefined, // Optional progress callback
-    (error) => {
-      console.error("Failed to load glTF model:", error);
-    }
-  );
-
-  return group; // Return the group (placeholder initially)
+  return group; // Return the group immediately; it will populate once loaded.
 });
 
 export { ShapeBuilder, Shape };
