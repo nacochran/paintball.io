@@ -4,21 +4,17 @@ import { mouse, keys, sceneManager, UICanvas } from "../Globals.js";
 import Player from "../GameObjects/Player.js";
 import Block from "../GameObjects/Block.js";
 import { Shape, ShapeBuilder } from "../utils/ShapeHelper.js";
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-// forward declare variables
+// Forward-declare variables
 let scene, camera, renderer;
 
 class Game {
   constructor() {
     // Game objects
     this.entities = [];
-    // For a third-person camera, define the offset in local space relative to the player.
-    // For example: 10 units up and 20 units behind.
-    this.camera = {
-      // This offset is in the player's local coordinate space.
-      offset: new THREE.Vector3(0, 10, -20),
-      target: null
-    };
+    this.clock = new THREE.Clock();
+    this.pointerLockControls = null;
   }
 
   setup() {
@@ -35,38 +31,38 @@ class Game {
     scene.add(directionalLight);
 
     // Create the player
-    const player = new Player({ x: 0, y: 0, z: 0 }, scene);
+    const player = new Player({ x: 0, y: -30, z: 0 }, scene);
     this.entities.push(player);
-    this.camera.target = player;
+    // Use a simple object to store camera target info.
+    this.camera = { target: player };
 
-    /*
-    // Create some blocks
-    for (let i = 0; i < 20; i++) {
-      for (let j = 0; j < 20; j++) {
-        const b0 = new Block({ x: -5 + i, y: -20, z: -5 + j});
-        this.entities.push(b0);
-      }
-    }
+    // Create the camera
+    camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      2000
+    );
 
-    for (let i = 0; i < 8; i++) {
-      const b1 = new Block({ x: -1 + i, y: -15, z: -1});
-      this.entities.push(b1);
-    }
+    // Instantiate PointerLockControls (remove FirstPersonControls entirely)
+    this.pointerLockControls = new PointerLockControls(camera, renderer.domElement);
+    scene.add(this.pointerLockControls.getObject());
 
-    for (let i = 0; i < 8; i++) {
-      const b1 = new Block({ x: -3 + i, y: -5, z: -2});
-      this.entities.push(b1);
-    }
-    */
+    // Request pointer lock on click
+    renderer.domElement.addEventListener('click', () => {
+      renderer.domElement.requestPointerLock();
+    });
 
-    // Imports Custom Shape
-    // IMPORTANT: When the model loads, its childEntities array will be populated.
+    // Position the camera initially at the player's eye level.
+    camera.position.copy(player.position).add(new THREE.Vector3(0, 1.5, 0));
+
+    // Imports Custom Shape (your existing GLTF loading code)
     const testImportShape = new Shape({
       type: 'gltf',
       url: './assets/gltf/TestLevelOne.glb',
       scene: scene,
       size: { width: 1, height: 1, depth: 1 },
-      position: new THREE.Vector3(5, -50, 5),
+      position: new THREE.Vector3(0, -50, 0),
       onLoad: (loadedGroup) => {
         console.log("Model fully loaded. Now updating game entities.");
         if (loadedGroup.childEntities && loadedGroup.childEntities.length) {
@@ -76,11 +72,9 @@ class Game {
         }
       }
     });
-
-    // Add the loaded group to the scene
     scene.add(testImportShape.mesh);
 
-    // Loop over existing entities and add their meshes to the scene
+    // Add entity meshes to the scene
     this.entities.forEach(entity => {
       if (entity.shape && entity.shape.mesh) {
         scene.add(entity.shape.mesh);
@@ -89,43 +83,32 @@ class Game {
       }
     });
 
-    // (Optional duplicate loop removed for clarity.)
-
     // Initial camera setup
     this.updateCameraPosition();
   }
 
   /**
-   * Updates the camera position to follow the player in a third-person perspective.
-   * The camera offset is defined in the player's local space. We rotate the offset
-   * by the player's current rotation and add it to the player's world position.
+   * Updates the camera position to follow the player in first-person view.
+   * The camera is placed at the player's eye level, and the player's yaw is updated from the camera.
    */
   updateCameraPosition() {
     const player = this.camera.target;
-    
-    // Clone the offset (local space vector) so we don't modify the original.
-    const localOffset = this.camera.offset.clone();
-    
-    // Flip the camera by adding PI (180°) to the player's Y rotation.
-    const rotationY = new THREE.Euler(0, player.rotation.y + Math.PI, 0);
-    localOffset.applyEuler(rotationY);
-    
-    // Set the camera's position to the player's position plus the transformed offset.
-    camera.position.copy(player.position).add(localOffset);
-    
-    // Make the camera look at the player's position (optionally add an upward offset so it looks at the head).
-    const lookAtPos = player.position.clone();
-    lookAtPos.y += 5; // Adjust as needed.
-    camera.lookAt(lookAtPos);
+    // Set the camera at the player's eye level:
+    camera.position.copy(player.position).add(new THREE.Vector3(0, 1.5, 0));
+    // Copy the camera’s yaw (horizontal rotation) to the player so that movement aligns with view.
+    player.rotation.y = camera.rotation.y;
   }
 
   play() {
-    // Update entities
+    const deltaTime = this.clock.getDelta();
+
+    // Update entities (your physics, collision, etc.)
     this.entities.forEach(entity => {
       entity.update(this.entities);
     });
 
-    // Update the camera position to follow the player from third-person perspective
+    // No need to update any FirstPersonControls – PointerLockControls automatically listens to mouse movement.
+    // Update the camera position to follow the player.
     this.updateCameraPosition();
 
     // Render the scene
@@ -141,6 +124,7 @@ const playScene = {
   init: function () {
     // Setup Three.js
     scene = new THREE.Scene();
+    // (The camera is created in game.setup, so this instantiation here is not strictly necessary.)
     camera = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
@@ -152,6 +136,23 @@ const playScene = {
     renderer.shadowMap.enabled = true;
     document.getElementById("3d-canvas").innerHTML = '';
     document.getElementById("3d-canvas").appendChild(renderer.domElement);
+
+    // Add pointer lock event listeners here:
+    renderer.domElement.addEventListener('click', () => {
+      renderer.domElement.requestPointerLock();
+    });
+
+    document.addEventListener('pointerlockchange', () => {
+      if (document.pointerLockElement === renderer.domElement) {
+        console.log("Pointer locked!");
+      } else {
+        console.log("Pointer unlocked!");
+      }
+    });
+
+    document.addEventListener('pointerlockerror', () => {
+      console.error("Error while attempting to lock pointer");
+    });``
 
     // Setup Game
     game.setup();
