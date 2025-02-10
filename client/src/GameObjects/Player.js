@@ -43,32 +43,32 @@ export default class Player extends PhysicsEntity {
     if (keys.pressed("S")) inputVector.z += 1;
     if (keys.pressed("A")) inputVector.x -= 1;
     if (keys.pressed("D")) inputVector.x += 1;
-
+  
     // Rotate input to align with the player's current Y rotation.
+    // (Now that mouse controls rotation, this uses the updated rotation.)
     inputVector.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.rotation.y);
-
-    if (inputVector.length() > 0) {
+  
+    if (inputVector.length() > 1) {
       inputVector.normalize();
-      this.wishDir.copy(inputVector);
-      // Set target speed (you can add a sprint key check if needed).
-      this.targetSpeed = (this.state === "sprinting") ? this.sprintSpeed : this.walkSpeed;
-    } else {
-      this.wishDir.set(0, 0, 0);
     }
-
-    // Handle turning.
-    if (keys.pressed("LEFT")) {
-      this.rotation.y += 0.01;
-    } else if (keys.pressed("RIGHT")) {
-      this.rotation.y -= 0.01;
-    }
-
+    this.wishDir.copy(inputVector);
+  
+    // Set target speed.
+    this.targetSpeed = (this.state === "sprinting") ? this.sprintSpeed : this.walkSpeed;
+  
+    // Remove or comment out turning via keys:
+    // if (keys.pressed("LEFT")) {
+    //   this.rotation.y += 0.01;
+    // } else if (keys.pressed("RIGHT")) {
+    //   this.rotation.y -= 0.01;
+    // }
+  
     // Handle jumping.
     if (keys.pressed("Space") && this.isGrounded) {
-      this.velocity.y = 30;  // Set jump impulse.
+      this.velocity.y = 30;
       this.isGrounded = false;
     }
-  }
+  } 
 
   /**
    * Main update loop for the player.

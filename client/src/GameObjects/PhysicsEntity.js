@@ -13,7 +13,7 @@ export default class PhysicsEntity extends Entity {
     
     // Physical properties.
     this.mass = config.mass || 10;
-    this.terminalVelocity = config.terminalVelocity || 1000; // Maximum falling speed.
+    this.terminalVelocity = config.terminalVelocity || 20; // Maximum falling speed.
 
     // Grounding flag.
     this.isGrounded = false;
@@ -22,7 +22,7 @@ export default class PhysicsEntity extends Entity {
     this.timer = new Timer();
     this.timer.setTimescale(1);
     this.accumulatedTime = 0;
-    this.fixedDelta = 1 / 360; // 360 physics updates per second
+    this.fixedDelta = 1 / 120;// 360 physics updates per second
 
     // For Quake‑style movement:
     // These will be set externally (e.g., by the Player subclass) based on input.
@@ -44,12 +44,22 @@ export default class PhysicsEntity extends Entity {
    * @returns {THREE.Vector3} Updated horizontal velocity.
    */
   accelerate(currentVel, wishDir, targetSpeed, accel, deltaTime) {
-    const currentSpeed = currentVel.dot(wishDir);
-    const addSpeed = targetSpeed - currentSpeed;
-    if (addSpeed <= 0) return currentVel;
-    const accelSpeed = accel * deltaTime * targetSpeed;
-    const finalSpeed = Math.min(addSpeed, accelSpeed);
-    return currentVel.add(wishDir.clone().multiplyScalar(finalSpeed));
+    // Calculate the desired velocity vector.
+    const desiredVel = wishDir.clone().multiplyScalar(targetSpeed);
+    
+    // Determine how much we need to change.
+    const velDiff = desiredVel.sub(currentVel);
+    
+    // The maximum change allowed this frame.
+    const maxAccel = accel * deltaTime;
+    
+    // If the difference is greater than maxAccel, clamp it.
+    if (velDiff.length() > maxAccel) {
+      velDiff.setLength(maxAccel);
+    }
+    
+    // Return the new velocity.
+    return currentVel.add(velDiff);
   }
 
   /**
@@ -141,7 +151,7 @@ export default class PhysicsEntity extends Entity {
     const thisBox = this.boundingBox;
     const mtv = this.calculateMTV(thisBox, entityBox);
 
-    const epsilon = 0.001;
+    const epsilon = 0.00001;
     if (mtv.length() < epsilon) return;
 
     if (mtv) {
