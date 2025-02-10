@@ -13,16 +13,8 @@ import { Strategy } from "passport-local";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// How to kill existing process:
-// netstat -ano | findstr :5000
-// taskkill /PID <PID> /F
-
-// TODO: Add customized page for invalid/expired token page
-// clean up code
-
 // Database
 import Database from './back_end_logic/infrastructure/database.js';
-
 
 //////////////////////////////////////////////////
 // General Config Variables                     //
@@ -50,7 +42,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Note: Check https://mailtrap.io/inboxes/3437985/messages/4697219800 for email responses
 async function sendVerificationEmail(email, verificationLink) {
   try {
     await transporter.sendMail({
@@ -81,8 +72,6 @@ const __dirname = path.dirname(__filename);
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
-//app.set('views', path.join(__dirname, '../views'));
-
 
 // Serve static files
 app.use(express.static(path.join(__dirname, "public")));
@@ -160,11 +149,6 @@ app.get("/user/:username", async (req, res) => {
       fields: ['username', 'email']
     });
 
-    // const [rows] = await db.query(
-    //   "SELECT username, email FROM users WHERE username = ?",
-    //   [username]
-    // );
-
     if (rows.length === 0) {
       return res.status(404).render("public-profile", { error: "User not found" });
     }
@@ -205,16 +189,6 @@ app.post("/register", async (req, res) => {
   }
 
   try {
-    // registered & verified accounts
-    // const [existingEmail] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
-    // const [existingUsername] = await db.query("SELECT * FROM users WHERE username = ?", [username]);
-
-    // // registered & unverified accounts
-    // const [existingEmail2] = await db.query("SELECT * FROM unverified_users WHERE email = ?", [email]);
-    // const [existingUsername2] = await db.query("SELECT * FROM unverified_users WHERE username = ?", [username]);
-
-
-
     if (await db.is_username_registered(username)) {
       return res.status(400).render("pages/register", { error: "Username already taken", user: req.user });
     } else if (await db.is_email_registered(email)) {
@@ -233,25 +207,6 @@ app.post("/register", async (req, res) => {
       res.redirect("/signup-successful");
     });
 
-    // bcrypt.hash(password, hashRounds, async (err, hash) => {
-    //   if (err) return console.error("Error hashing password:", err);
-
-    //   // Generate verification token
-    //   const verificationToken = crypto.randomBytes(32).toString("hex");
-
-    //   // Store in `unverified_users`
-    //   const expirationTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
-    //   await db.query(
-    //     "INSERT INTO unverified_users (username, email, password, verification_token, token_expires_at) VALUES (?, ?, ?, ?, ?)",
-    //     [username, email, hash, verificationToken, expirationTime]
-    //   );
-
-    //   // Send Verification Email
-    //   const verificationLink = `http://localhost:5000/verify?token=${verificationToken}`;
-    //   await sendVerificationEmail(email, verificationLink);
-
-    //   res.redirect("/signup-successful");
-    // });
   } catch (error) {
     console.error("Error signing up user:", error.message);
     res.status(500).render("pages/register", { error: "Internal server error", user: req.user });
@@ -302,34 +257,11 @@ app.get("/verify", async (req, res) => {
   }
 
   try {
-    // // Find user with this token and check expiration
-    // const [rows] = await db.query(
-    //   "SELECT * FROM unverified_users WHERE verification_token = ? AND token_expires_at > NOW()",
-    //   [token]
-    // );
-
-    // if (rows.length === 0) {
-    //   return res.status(400).send("Invalid or expired verification link.");
-    // }
-
-    // const user = rows[0];
-
-    // // Move user to `users` table
-    // await db.query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", [
-    //   user.username,
-    //   user.email,
-    //   user.password
-    // ]);
-
-    // // Delete user from `unverified_users`
-    // await db.query("DELETE FROM unverified_users WHERE id = ?", [user.id]);
-
-
     await db.verify_user({ token: token }, (success) => {
       if (success) {
         res.redirect("/login");
       } else {
-        res.status(400).send("Invalid or expired verification link.");
+        return res.render("pages/invalid-verification", { user: req.user });
       }
     });
 
@@ -348,34 +280,6 @@ app.post("/resend-verification", async (req, res) => {
   const { email } = req.body;
 
   try {
-    // // Check if user exists in `unverified_users`
-    // const [rows] = await db.query("SELECT * FROM unverified_users WHERE email = ?", [email]);
-
-    // if (rows.length === 0) {
-    //   return res.render("resend-verification", {
-    //     error: "No unverified account found with this email.",
-    //     message: null,
-    //   });
-    // }
-
-    // // Generate new verification token and expiration time
-    // const verificationToken = crypto.randomBytes(32).toString("hex");
-    // const expirationTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-
-    // // Update user with new token and expiration time
-    // await db.query(
-    //   "UPDATE unverified_users SET verification_token = ?, token_expires_at = ? WHERE email = ?",
-    //   [verificationToken, expirationTime, email]
-    // );
-
-    // // Send new verification email
-    // const verificationLink = `http://localhost:5000/verify?token=${verificationToken}`;
-    // await sendVerificationEmail(email, verificationLink);
-
-    // res.render("resend-verification", {
-    //   message: "A new verification email has been sent.",
-    //   error: null,
-    // });
 
     await db.resend_verification_email({ email: email }, async (success, verificationToken) => {
       if (success) {
