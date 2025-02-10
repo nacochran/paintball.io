@@ -8,7 +8,7 @@
         <%= error %>
       </p>
 
-      <% if (error==="User not verified. Please check your email." ) { %>
+      <% if (error==="not_verified" ) { %>
         <form action="/resend-verification" method="GET">
           <button type="submit">Resend Verification Email</button>
         </form>
