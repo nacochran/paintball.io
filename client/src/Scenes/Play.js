@@ -30,7 +30,7 @@ class Game {
     directionalLight.position.set(0, 10, 5).normalize();
     scene.add(directionalLight);
 
-   // Create the camera (before the player)
+   // Create the camera
     camera = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
