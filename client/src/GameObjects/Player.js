@@ -56,7 +56,6 @@ export default class Player extends PhysicsEntity {
     // Set target speed.
     this.targetSpeed = (this.state === "sprinting") ? this.sprintSpeed : this.walkSpeed;
   
-    // Remove or comment out turning via keys:
     // if (keys.pressed("LEFT")) {
     //   this.rotation.y += 0.01;
     // } else if (keys.pressed("RIGHT")) {
