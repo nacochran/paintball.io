@@ -30,19 +30,18 @@ class Game {
     directionalLight.position.set(0, 10, 5).normalize();
     scene.add(directionalLight);
 
-    // Create the player
-    const player = new Player({ x: 0, y: -30, z: 0 }, scene);
-    this.entities.push(player);
-    // Use a simple object to store camera target info.
-    this.camera = { target: player };
-
-    // Create the camera
+   // Create the camera (before the player)
     camera = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
       0.1,
       2000
     );
+
+    // Then create the player and pass in the camera
+    const player = new Player({ x: 0, y: -30, z: 0 }, scene, camera);
+    this.entities.push(player);
+    this.camera = { target: player };
 
     // Instantiate PointerLockControls (remove FirstPersonControls entirely)
     this.pointerLockControls = new PointerLockControls(camera, renderer.domElement);
@@ -139,7 +138,7 @@ const playScene = {
 
     // Add pointer lock event listeners here:
     renderer.domElement.addEventListener('click', () => {
-      renderer.domElement.requestPointerLock();
+      game.pointerLockControls.lock();
     });
 
     document.addEventListener('pointerlockchange', () => {
