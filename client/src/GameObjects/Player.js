@@ -5,11 +5,14 @@ import * as THREE from 'three';
 import BoundingBox from "../utils/BoundingBox.js";
 
 export default class Player extends PhysicsEntity {
-  constructor(config, scene) {
+  constructor(config, scene, camera) {
     super(config);
 
     // Define player size.
     this.size = { width: 1, height: 1, depth: 1 };
+
+    // Save the camera reference for movement calculations.
+    this.camera = camera;
 
     // Starting state.
     this.state = "idle";
@@ -38,29 +41,37 @@ export default class Player extends PhysicsEntity {
    * Process input to set the wish direction and target speed.
    */
   handleMovement() {
-    let inputVector = new THREE.Vector3(0, 0, 0);
-    if (keys.pressed("W")) inputVector.z -= 1;
-    if (keys.pressed("S")) inputVector.z += 1;
-    if (keys.pressed("A")) inputVector.x -= 1;
-    if (keys.pressed("D")) inputVector.x += 1;
-  
-    // Rotate input to align with the player's current Y rotation.
-    // (Now that mouse controls rotation, this uses the updated rotation.)
-    inputVector.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.rotation.y);
-  
-    if (inputVector.length() > 1) {
-      inputVector.normalize();
+    // Ensure this.camera exists.
+    if (!this.camera) {
+      console.error("Camera reference is missing in Player!");
+      return;
     }
-    this.wishDir.copy(inputVector);
   
-    // Set target speed.
+    // Compute the camera’s forward direction.
+    const forward = new THREE.Vector3();
+    this.camera.getWorldDirection(forward);
+    forward.y = 0; // flatten the vector so movement stays horizontal
+    forward.normalize();
+  
+    // Compute the camera’s right vector.
+    const right = new THREE.Vector3();
+    right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+  
+    // Initialize a movement vector.
+    const move = new THREE.Vector3();
+    if (keys.pressed("W")) move.add(forward);
+    if (keys.pressed("S")) move.sub(forward);
+    if (keys.pressed("A")) move.sub(right);
+    if (keys.pressed("D")) move.add(right);
+  
+    // Normalize if there is movement.
+    if (move.lengthSq() > 0) {
+      move.normalize();
+    }
+    
+    // Set the player's desired horizontal movement.
+    this.wishDir.copy(move);
     this.targetSpeed = (this.state === "sprinting") ? this.sprintSpeed : this.walkSpeed;
-  
-    // if (keys.pressed("LEFT")) {
-    //   this.rotation.y += 0.01;
-    // } else if (keys.pressed("RIGHT")) {
-    //   this.rotation.y -= 0.01;
-    // }
   
     // Handle jumping.
     if (keys.pressed("Space") && this.isGrounded) {
