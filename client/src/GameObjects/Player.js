@@ -63,6 +63,11 @@ export default class Player extends PhysicsEntity {
     if (keys.pressed("S")) move.sub(forward);
     if (keys.pressed("A")) move.sub(right);
     if (keys.pressed("D")) move.add(right);
+
+    if (keys.pressed("ShiftLeft")) {
+      this.state = "sprinting";
+      console.log("am I sprinting?")
+    }
   
     // Normalize if there is movement.
     if (move.lengthSq() > 0) {
@@ -87,6 +92,7 @@ export default class Player extends PhysicsEntity {
   update(entities) {
     this.timer.update();
     this.accumulatedTime += this.timer.getDelta();
+    //this.fixedUpdate();
     while (this.accumulatedTime >= this.fixedDelta) {
       this.handleMovement();
       this.updatePhysics(this.fixedDelta);
