@@ -151,7 +151,7 @@ export default class PhysicsEntity extends Entity {
     const thisBox = this.boundingBox;
     const mtv = this.calculateMTV(thisBox, entityBox);
 
-    const epsilon = 0.00001;
+    const epsilon = 0;
     if (mtv.length() < epsilon) return;
 
     if (mtv) {
