@@ -6,103 +6,155 @@ export default class PhysicsEntity extends Entity {
   constructor(config) {
     super(config);
 
-    // State vectors
+    // State vectors.
     this.velocity = new THREE.Vector3(0, 0, 0);
     this.acceleration = new THREE.Vector3(0, 0, 0);
     this.appliedForces = new THREE.Vector3(0, 0, 0);
     
-    // Physical properties
+    // Physical properties.
     this.mass = config.mass || 10;
-    this.terminalVelocity = config.terminalVelocity || 1000; // Maximum falling speed
+    this.terminalVelocity = config.terminalVelocity || 20; // Maximum falling speed.
 
-    // Grounding flag
+    // Grounding flag.
     this.isGrounded = false;
     
-    // Timer & fixed time step integration
+    // Timer & fixed time step integration.
     this.timer = new Timer();
     this.timer.setTimescale(1);
     this.accumulatedTime = 0;
-    this.fixedDelta = 1 / 6000; // 60 physics updates per second
+    this.fixedDelta = 1 / 120;// 360 physics updates per second
+
+    // For Quake‑style movement:
+    // These will be set externally (e.g., by the Player subclass) based on input.
+    this.wishDir = new THREE.Vector3(0, 0, 0); // Normalized desired horizontal direction.
+    this.targetSpeed = 0;                     // Desired horizontal speed.
   }
 
-  /**
-   * Apply a force to the entity.
-   * @param {THREE.Vector3} force - Force vector to apply.
-   */
-  applyForce(force) {
-    this.appliedForces.add(force);
-  }
+  // ─────────────────────────────
+  // Helper Functions for Quake‑like Movement
+  // ─────────────────────────────
 
   /**
-   * Apply drag force to the entity.
-   * @param {Entity|null} platform - The platform (if any) the entity is on.
+   * Accelerate the current horizontal velocity toward the target speed.
+   * @param {THREE.Vector3} currentVel - The current horizontal velocity.
+   * @param {THREE.Vector3} wishDir - Normalized desired direction.
+   * @param {Number} targetSpeed - Desired horizontal speed.
+   * @param {Number} accel - Acceleration constant.
+   * @param {Number} deltaTime - Fixed time step.
+   * @returns {THREE.Vector3} Updated horizontal velocity.
    */
-  applyDrag(platform) {
-    const MIN_VELOCITY = 0.01;
-    if (this.velocity.length() < MIN_VELOCITY) return;
-  
-    let dragForce;
-    if (platform) {
-      const friction = platform.friction || 0.1;
-      dragForce = this.velocity.clone().multiplyScalar(-friction);
-    } else {
-      const airFriction = 20 // Reduced air friction for smoother jumps
-      dragForce = this.velocity.clone().normalize().multiplyScalar(-airFriction);
+  accelerate(currentVel, wishDir, targetSpeed, accel, deltaTime) {
+    // Calculate the desired velocity vector.
+    const desiredVel = wishDir.clone().multiplyScalar(targetSpeed);
+    
+    // Determine how much we need to change.
+    const velDiff = desiredVel.sub(currentVel);
+    
+    // The maximum change allowed this frame.
+    const maxAccel = accel * deltaTime;
+    
+    // If the difference is greater than maxAccel, clamp it.
+    if (velDiff.length() > maxAccel) {
+      velDiff.setLength(maxAccel);
     }
-    this.applyForce(dragForce);
+    
+    // Return the new velocity.
+    return currentVel.add(velDiff);
   }
 
   /**
-   * Apply gravity to the entity.
+   * Apply friction to reduce horizontal speed.
+   * @param {THREE.Vector3} currentVel - The current horizontal velocity.
+   * @param {Number} friction - Friction constant.
+   * @param {Number} deltaTime - Fixed time step.
+   * @returns {THREE.Vector3} Updated horizontal velocity.
    */
-  applyGravity() {
-    const G_CONST = -500; // units/s² (adjust for future world scale)
-    const gravityForce = new THREE.Vector3(0, G_CONST * this.mass, 0);
-    this.applyForce(gravityForce);
+  applyGroundFriction(currentVel, friction, deltaTime) {
+    const speed = currentVel.length();
+    if (speed < 0.1) return new THREE.Vector3(0, 0, 0);
+    const drop = speed * friction * deltaTime;
+    const newSpeed = Math.max(speed - drop, 0);
+    return currentVel.clone().normalize().multiplyScalar(newSpeed);
   }
 
   /**
-   * Update physics over one fixed time step.
-   * @param {Number} deltaTime - Fixed time step (in seconds).
+   * Apply gravity to the vertical component.
+   * (Gravity is applied here rather than via force integration.)
+   * @param {Number} deltaTime - Fixed time step.
+   * @returns {Number} The updated vertical velocity.
+   */
+  applyGravity(deltaTime, currentVerticalVel) {
+    const gravity = -50; // Adjust as needed.
+    return currentVerticalVel + gravity * deltaTime;
+  }
+
+  // ─────────────────────────────
+  // Quake‑Style Physics Update
+  // ─────────────────────────────
+
+  /**
+   * Update physics using a Quake‑like movement system.
+   * Separates horizontal and vertical motion, applies gravity,
+   * and uses custom acceleration and friction for horizontal movement.
+   * @param {Number} deltaTime - Fixed time step.
    */
   updatePhysics(deltaTime) {
-    // Always apply gravity.
-    this.applyGravity();
-    this.applyDrag();
-  
-    // If already grounded, apply an upward normal force to cancel gravity.
+    // Separate horizontal (X/Z) and vertical (Y) components.
+    let horizontalVel = new THREE.Vector3(this.velocity.x, 0, this.velocity.z);
+    let verticalVel = this.velocity.y;
+
+    // Apply gravity to vertical velocity.
+    verticalVel = this.applyGravity(deltaTime, verticalVel);
+
+    // Horizontal movement:
     if (this.isGrounded) {
-      // Gravity force is: mass * G_CONST (e.g., mass * (-500))
-      // To cancel, add: mass * 500 upward.
-      const normalForce = new THREE.Vector3(0, this.mass * 500, 0);
-      this.applyForce(normalForce);
+      if (this.wishDir.lengthSq() > 0) {
+        const groundAccel = 50; // Strong acceleration on ground.
+        horizontalVel = this.accelerate(horizontalVel, this.wishDir, this.targetSpeed, groundAccel, deltaTime);
+      } else {
+        // No input: apply strong friction for quick stops.
+        horizontalVel = this.applyGroundFriction(horizontalVel, 10, deltaTime);
+      }
+    } else {
+      // In air: allow limited air control.
+      if (this.wishDir.lengthSq() > 0) {
+        const airAccel = 20; // Reduced acceleration in air.
+        horizontalVel = this.accelerate(horizontalVel, this.wishDir, this.targetSpeed, airAccel, deltaTime);
+      }
+      // Apply mild friction in the air.
+      horizontalVel = this.applyGroundFriction(horizontalVel, 2, deltaTime);
     }
-  
-    this.acceleration.copy(this.appliedForces).multiplyScalar(1 / this.mass);
-    this.velocity.add(this.acceleration.clone().multiplyScalar(deltaTime));
+
+    // Reassemble the overall velocity.
+    this.velocity.set(horizontalVel.x, verticalVel, horizontalVel.z);
     if (this.velocity.y < -this.terminalVelocity) {
       this.velocity.y = -this.terminalVelocity;
     }
+    
+    // Update the entity's position.
     this.position.add(this.velocity.clone().multiplyScalar(deltaTime));
+    
+    // Reset applied forces.
     this.appliedForces.set(0, 0, 0);
   }
 
+  // ─────────────────────────────
+  // Collision and Miscellaneous Functions
+  // ─────────────────────────────
+
   /**
    * Resolve collisions using the Separating Axis Theorem.
-   * When a collision from below is detected, mark the entity as grounded.
+   * If a collision from below is detected, mark the entity as grounded.
    */
   resolveCollision(entity) {
     const entityBox = entity.boundingBox;
     const thisBox = this.boundingBox;
     const mtv = this.calculateMTV(thisBox, entityBox);
 
-    const epsilon = 0.1; // A sort of leeway such that it does not constantly try to resolve collision and push the player up
-    if (mtv.length() < epsilon) {
-      return;
-    }
+    const epsilon = 0;
+    if (mtv.length() < epsilon) return;
 
     if (mtv) {
-      // Use the vector from the other entity to this one.
       const direction = this.position.clone().sub(entity.position).normalize();
       const pushVector = mtv.dot(direction) < 0 ? mtv.negate() : mtv;
       this.position.add(pushVector);
@@ -115,7 +167,7 @@ export default class PhysicsEntity extends Entity {
         // If collision comes from below, mark as grounded.
         if (thisBox.corners[0].y > entityBox.corners[0].y) {
           this.isGrounded = true;
-          console.log("The player is grounded");
+          console.log("The entity is grounded");
         }
       } else {
         this.velocity.z = 0;
@@ -170,8 +222,8 @@ export default class PhysicsEntity extends Entity {
   }
 
   /**
-   * Fixed-step update method. Call this every frame to accumulate time and
-   * perform one or more fixed-step physics updates.
+   * Fixed-step update method.
+   * Call this every frame to accumulate time and perform fixed-step physics updates.
    */
   fixedUpdate() {
     this.timer.update();
