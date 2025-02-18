@@ -4,7 +4,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import dotenv from "dotenv";
+import config from "./config.js";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer"; // sending mail
 import session from "express-session";
@@ -15,30 +15,24 @@ import { fileURLToPath } from "url";
 
 // Database
 import Database from './back_end_logic/infrastructure/database.js';
+import User from './back_end_logic/app_logic/user.js';
 
 //////////////////////////////////////////////////
 // General Config Variables                     //
 //////////////////////////////////////////////////
 const app = express();
-const port = 5000;
-const hashRounds = 10;
-
-//////////////////////////////////////////////////
-// Environment Variables                        //
-//////////////////////////////////////////////////
-dotenv.config();
 
 //////////////////////////////////////////////////
 // Setup Email Management System                //
 //////////////////////////////////////////////////
 const transporter = nodemailer.createTransport({
   service: "Gmail",
-  host: process.env.MAIL_HOST,
-  port: process.env.MAIL_PORT,
+  host: config.mail.host,
+  port: config.mail.port,
   secure: true,
   auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS
+    user: config.mail.user,
+    pass: config.mail.password
   },
 });
 
@@ -88,7 +82,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Create session cookie
 app.use(
   session({
-    secret: process.env.SESSION_SECRET,
+    secret: config.session.secret,
     resave: false,
     saveUninitialized: false,
     cookie: { maxAge: 1000 * 60 * 60 * 24 }, // 1-day cookie
@@ -102,7 +96,7 @@ app.use(passport.session());
 //////////////////////////////////////////////////
 // Create Database Connection                   //
 //////////////////////////////////////////////////
-const db = new Database();
+const db = new Database(config);
 
 await db.test_connection();
 
@@ -122,7 +116,8 @@ app.get("/", (req, res) => {
 app.get("/login", (req, res) => {
   res.render("pages/login", {
     user: req.user,
-    error: null
+    error: null,
+    message: null
   });
 });
 
@@ -189,18 +184,15 @@ app.post("/register", async (req, res) => {
   }
 
   try {
-    if (await db.is_username_registered(username)) {
+    const user = new User({ username: username, email: email, password: password });
+
+    if (await user.is_username_unique(db)) {
       return res.status(400).render("pages/register", { error: "Username already taken", user: req.user });
-    } else if (await db.is_email_registered(email)) {
+    } else if (await user.is_email_unique(db)) {
       return res.status(400).render("pages/register", { error: "Email already taken", user: req.user });
     }
 
-    await db.register_user({
-      username: username,
-      email: email,
-      password: password,
-      hashRounds: hashRounds,
-    }, async function (verificationToken) {
+    await user.register(db, config.security.hashRounds, async function (verificationToken) {
       const verificationLink = `http://localhost:5000/verify?token=${verificationToken}`;
       await sendVerificationEmail(email, verificationLink);
 
@@ -219,18 +211,18 @@ app.post("/login", (req, res, next) => {
 
     if (!user) {
       if (err == "not_verified") {
-        return res.status(400).render("pages/login", { error: err, user: req.user });
+        return res.status(400).render("pages/login", { error: err, user: req.user, message: null });
       } else if (err == "invalid_credentials") {
-        return res.status(400).render("pages/login", { error: err, user: req.user });
+        return res.status(400).render("pages/login", { error: err, user: req.user, message: null });
       } else {
         // general case
-        return res.status(400).render("pages/login", { error: err, user: req.user });
+        return res.status(400).render("pages/login", { error: err, user: req.user, message: null });
       }
     }
 
     req.login(user, (err) => {
       if (err) {
-        return res.status(500).render("pages/login", { error: "Error logging in", user: req.user });
+        return res.status(500).render("pages/login", { error: "Error logging in", user: req.user, message: null });
       }
       res.redirect("/profile");
     });
@@ -259,7 +251,7 @@ app.get("/verify", async (req, res) => {
   try {
     await db.verify_user({ token: token }, (success) => {
       if (success) {
-        res.redirect("/login");
+        res.render("pages/login", { user: req.user, error: null, message: "Account verified!" });
       } else {
         return res.render("pages/invalid-verification", { user: req.user });
       }
@@ -315,14 +307,16 @@ passport.use(
   "local",
   new Strategy(async function verify(username, password, cb) {
     try {
+      const user = new User({ username: username, password: password });
+
       // Check if user is in unverified_users
-      const unverifiedUsers = await db.get_unverified_users({ queryType: 'username', filter: username, fields: ['username'] });
+      const unverifiedUsers = await user.match_unverified_users(db);
 
       if (unverifiedUsers.length > 0) {
         return cb("not_verified", false);
       }
 
-      const users = await db.get_verified_users({ queryType: 'username', filter: username, fields: ['username', 'password', 'email'] });
+      const users = await user.match_verified_users(db);
 
       if (users.length === 0) {
         return cb("invalid_credentials", false);
@@ -347,6 +341,22 @@ db.refresh_unverified_users();
 //////////////////////////////////////////////////
 // Run Server                                   //
 //////////////////////////////////////////////////
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+const server = app.listen(config.app.port, () => {
+  console.log(`Server running on port ${config.app.port}`);
+});
+
+process.on("SIGTERM", () => {
+  console.log("Closing server...");
+  server.close(() => {
+    console.log("Server closed.");
+    process.exit(0);
+  });
+});
+
+process.on("SIGINT", () => {
+  console.log("Closing server...");
+  server.close(() => {
+    console.log("Server closed.");
+    process.exit(0);
+  });
 });
