@@ -10,14 +10,12 @@ export default class PhysicsEntity extends Entity {
     this.velocity = new THREE.Vector3(0, 0, 0);
     this.acceleration = new THREE.Vector3(0, 0, 0);
     this.appliedForces = new THREE.Vector3(0, 0, 0);
-
     // Physical properties.
     this.mass = config.mass || 10;
     this.terminalVelocity = config.terminalVelocity || 20; // Maximum falling speed.
 
     // Grounding flag.
     this.isGrounded = false;
-
     // Timer & fixed time step integration.
     this.timer = new Timer();
     this.timer.setTimescale(1);
@@ -57,7 +55,6 @@ export default class PhysicsEntity extends Entity {
     if (velDiff.length() > maxAccel) {
       velDiff.setLength(maxAccel);
     }
-
     // Return the new velocity.
     return currentVel.add(velDiff);
   }
