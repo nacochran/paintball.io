@@ -163,9 +163,9 @@ export default class PhysicsEntity extends Entity {
       if (Math.abs(mtvAxis.x) > Math.abs(mtvAxis.y) && Math.abs(mtvAxis.x) > Math.abs(mtvAxis.z)) {
         this.velocity.x = 0;
       } else if (Math.abs(mtvAxis.y) > Math.abs(mtvAxis.z)) {
-        this.velocity.y = 0;
         // If collision comes from below, mark as grounded.
         if (thisBox.corners[0].y > entityBox.corners[0].y) {
+          this.velocity.y = 0;
           this.isGrounded = true;
           //console.log("The entity is grounded");
         } else {
