@@ -1,0 +1,11 @@
+{
+  "src/main.js": {
+    "file": "assets/main-CrtqTAK5.js",
+    "name": "main",
+    "src": "src/main.js",
+    "isEntry": true,
+    "css": [
+      "assets/main-DKg0GQma.css"
+    ]
+  }
+}

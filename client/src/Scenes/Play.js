@@ -30,7 +30,7 @@ class Game {
     directionalLight.position.set(0, 10, 5).normalize();
     scene.add(directionalLight);
 
-   // Create the camera
+    // Create the camera
     camera = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
@@ -58,7 +58,7 @@ class Game {
     // Imports Custom Shape (your existing GLTF loading code)
     const testImportShape = new Shape({
       type: 'gltf',
-      url: './assets/gltf/TestLevelOne.glb',
+      url: 'client/dist/public/assets/gltf/TestLevelOne.glb',
       scene: scene,
       size: { width: 1, height: 1, depth: 1 },
       position: new THREE.Vector3(0, -50, 0),
@@ -151,7 +151,7 @@ const playScene = {
 
     document.addEventListener('pointerlockerror', () => {
       console.error("Error while attempting to lock pointer");
-    });``
+    }); ``
 
     // Setup Game
     game.setup();

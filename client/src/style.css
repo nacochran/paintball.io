@@ -10,7 +10,7 @@ body {
 }
 
 /* Style for the 3D canvas */
-#3d-canvas {
+#threed-canvas {
   position: absolute;
   top: 0;
   left: 0;
