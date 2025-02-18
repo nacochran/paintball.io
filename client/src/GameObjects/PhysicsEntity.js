@@ -10,14 +10,12 @@ export default class PhysicsEntity extends Entity {
     this.velocity = new THREE.Vector3(0, 0, 0);
     this.acceleration = new THREE.Vector3(0, 0, 0);
     this.appliedForces = new THREE.Vector3(0, 0, 0);
-    
     // Physical properties.
     this.mass = config.mass || 10;
     this.terminalVelocity = config.terminalVelocity || 20; // Maximum falling speed.
 
     // Grounding flag.
     this.isGrounded = false;
-    
     // Timer & fixed time step integration.
     this.timer = new Timer();
     this.timer.setTimescale(1);
@@ -46,18 +44,17 @@ export default class PhysicsEntity extends Entity {
   accelerate(currentVel, wishDir, targetSpeed, accel, deltaTime) {
     // Calculate the desired velocity vector.
     const desiredVel = wishDir.clone().multiplyScalar(targetSpeed);
-    
+
     // Determine how much we need to change.
     const velDiff = desiredVel.sub(currentVel);
-    
+
     // The maximum change allowed this frame.
     const maxAccel = accel * deltaTime;
-    
+
     // If the difference is greater than maxAccel, clamp it.
     if (velDiff.length() > maxAccel) {
       velDiff.setLength(maxAccel);
     }
-    
     // Return the new velocity.
     return currentVel.add(velDiff);
   }
@@ -130,10 +127,10 @@ export default class PhysicsEntity extends Entity {
     if (this.velocity.y < -this.terminalVelocity) {
       this.velocity.y = -this.terminalVelocity;
     }
-    
+
     // Update the entity's position.
     this.position.add(this.velocity.clone().multiplyScalar(deltaTime));
-    
+
     // Reset applied forces.
     this.appliedForces.set(0, 0, 0);
   }
@@ -146,18 +143,18 @@ export default class PhysicsEntity extends Entity {
    * Resolve collisions using the Separating Axis Theorem.
    * If a collision from below is detected, mark the entity as grounded.
    */
-  resolveCollision(entity) {
+  resolveCollision(entity, deltaTime) {
     const entityBox = entity.boundingBox;
     const thisBox = this.boundingBox;
     const mtv = this.calculateMTV(thisBox, entityBox);
 
-    const epsilon = 0;
+    const epsilon = 0.00000001;
     if (mtv.length() < epsilon) return;
 
     if (mtv) {
-      const direction = this.position.clone().sub(entity.position).normalize();
+      const direction = this.position.clone().sub(entity.position).normalize().multiplyScalar(epsilon);
       const pushVector = mtv.dot(direction) < 0 ? mtv.negate() : mtv;
-      this.position.add(pushVector);
+      this.position.add(pushVector.multiplyScalar(deltaTime));
 
       const mtvAxis = pushVector.clone().normalize();
       if (Math.abs(mtvAxis.x) > Math.abs(mtvAxis.y) && Math.abs(mtvAxis.x) > Math.abs(mtvAxis.z)) {
@@ -167,7 +164,10 @@ export default class PhysicsEntity extends Entity {
         // If collision comes from below, mark as grounded.
         if (thisBox.corners[0].y > entityBox.corners[0].y) {
           this.isGrounded = true;
-          console.log("The entity is grounded");
+          //console.log("The entity is grounded");
+        } else {
+          // to test
+          this.velocity.y *= -1;
         }
       } else {
         this.velocity.z = 0;
@@ -178,11 +178,11 @@ export default class PhysicsEntity extends Entity {
   /**
    * Handle collisions with a list of entities.
    */
-  handleCollisions(entities) {
+  handleCollisions(entities, deltaTime) {
     const collisions = this.boundingBox.handleCollisions(entities);
     if (collisions.length > 0) {
       for (const entity of collisions) {
-        this.resolveCollision(entity);
+        this.resolveCollision(entity, deltaTime);
       }
     } else {
       this.isGrounded = false;
