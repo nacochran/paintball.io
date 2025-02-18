@@ -170,7 +170,7 @@ export default class PhysicsEntity extends Entity {
           //console.log("The entity is grounded");
         } else {
           // to test
-          this.velocity.y *= -1;
+          this.velocity.y *= -5;
         }
       } else {
         this.velocity.z = 0;
