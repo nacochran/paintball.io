@@ -12,6 +12,7 @@ import passport from "passport";
 import { Strategy } from "passport-local";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from 'fs';
 
 // Database
 import Database from './back_end_logic/infrastructure/database.js';
@@ -64,11 +65,24 @@ async function sendVerificationEmail(email, verificationLink) {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Function to read the manifest and return the hashed JS file
+function getManifest() {
+  const manifestPath = path.resolve(__dirname, '../client/dist/public/.vite/manifest.json');
+
+  if (fs.existsSync(manifestPath)) {
+    return JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+  }
+  console.log("testing...");
+  return {};
+}
+
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 // Serve static files
 app.use(express.static(path.join(__dirname, "public")));
+app.use('/client/dist', express.static(path.join(__dirname, '..', 'client', 'dist')));
+
 
 // Enable CORS
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
@@ -88,6 +102,21 @@ app.use(
     cookie: { maxAge: 1000 * 60 * 60 * 24 }, // 1-day cookie
   })
 );
+
+// Middleware to inject hashed JS file into the EJS views
+app.use((req, res, next) => {
+  const manifest = getManifest();
+
+  // If the manifest exists and contains the necessary entry points
+  const jsFile = manifest['src/main.js']['file'] || null;
+
+  // Pass the JS file to the template
+  res.locals.jsFile = jsFile;
+
+  // console.log(jsFile);
+
+  next();
+});
 
 // Set up passport for authentication
 app.use(passport.initialize());
