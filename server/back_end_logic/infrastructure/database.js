@@ -1,16 +1,16 @@
 import mysql from "mysql2/promise";
-import crypto from "crypto"; // generating token for email verification link
+import crypto from "crypto"; // senerating token for email verification link
 import bcrypt from "bcryptjs";
 
 // TODO: Update to use transactions/commits
 
 export default class Database {
-  constructor() {
+  constructor(config) {
     this.db = mysql.createPool({
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
+      host: config.db.host,
+      user: config.db.user,
+      password: config.db.password,
+      database: config.db.database
     });
   }
 
@@ -70,33 +70,31 @@ export default class Database {
   }
 
   async register_user(config, cb) {
-    bcrypt.hash(config.password, config.hashRounds, async (err, hash) => {
-      if (err) return console.error("Error hashing password:", err);
+    const connection = await this.db.getConnection(); // Get a single connection
+    await connection.beginTransaction(); // Start transaction
 
-      let state = 'success';
-
-      // if (this.is_username_registered(config.username)) {
-      //   state = 'username_already_registered';
-      //   cb(state);
-      //   return console.error(state);
-      // } else if (this.is_email_registered(config.email)) {
-      //   state = 'email_already_registered';
-      //   cb(state);
-      //   return console.error(state);
-      // }
-
+    try {
+      const hashedPassword = await bcrypt.hash(config.password, config.hashRounds);
       const verificationToken = crypto.randomBytes(32).toString("hex");
       const expirationTime = new Date(Date.now() + 5 * 60 * 1000);
 
-      await this.db.query(
+      // Insert the new user into `unverified_users`
+      await connection.query(
         "INSERT INTO unverified_users (username, email, password, verification_token, token_expires_at) VALUES (?, ?, ?, ?, ?)",
-        [config.username, config.email, hash, verificationToken, expirationTime]
+        [config.username, config.email, hashedPassword, verificationToken, expirationTime]
       );
 
-      // What to do after registration success
+      await connection.commit(); // Commit transaction if all queries succeed
       cb(verificationToken);
-    });
+    } catch (error) {
+      await connection.rollback(); // Rollback transaction on error
+      console.error("Error registering user:", error);
+      cb(null);
+    } finally {
+      connection.release(); // Release connection back to pool
+    }
   }
+
 
   async verify_user(config, cb) {
     const [rows] = await this.db.query(
