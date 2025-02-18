@@ -1,7 +1,0 @@
-
-
-class UnregisteredUser {
-  constructor() {
-
-  }
-}
