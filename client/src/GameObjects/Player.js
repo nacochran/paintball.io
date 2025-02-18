@@ -46,17 +46,17 @@ export default class Player extends PhysicsEntity {
       console.error("Camera reference is missing in Player!");
       return;
     }
-  
+
     // Compute the camera’s forward direction.
     const forward = new THREE.Vector3();
     this.camera.getWorldDirection(forward);
     forward.y = 0; // flatten the vector so movement stays horizontal
     forward.normalize();
-  
+
     // Compute the camera’s right vector.
     const right = new THREE.Vector3();
     right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
-  
+
     // Initialize a movement vector.
     const move = new THREE.Vector3();
     if (keys.pressed("W")) move.add(forward);
@@ -68,22 +68,22 @@ export default class Player extends PhysicsEntity {
       this.state = "sprinting";
       console.log("am I sprinting?")
     }
-  
+
     // Normalize if there is movement.
     if (move.lengthSq() > 0) {
       move.normalize();
     }
-    
+
     // Set the player's desired horizontal movement.
     this.wishDir.copy(move);
     this.targetSpeed = (this.state === "sprinting") ? this.sprintSpeed : this.walkSpeed;
-  
+
     // Handle jumping.
     if (keys.pressed("Space") && this.isGrounded) {
       this.velocity.y = 30;
       this.isGrounded = false;
     }
-  } 
+  }
 
   /**
    * Main update loop for the player.
@@ -96,7 +96,7 @@ export default class Player extends PhysicsEntity {
     while (this.accumulatedTime >= this.fixedDelta) {
       this.handleMovement();
       this.updatePhysics(this.fixedDelta);
-      this.handleCollisions(entities);
+      this.handleCollisions(entities, this.fixedDelta);
       this.accumulatedTime -= this.fixedDelta;
     }
     this.shape.update();
