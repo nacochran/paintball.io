@@ -109,10 +109,11 @@ export default class SceneManager {
   }
 
 
-  createTransition(targetScene) {
+  createTransition(targetScene, cb = null) {
     sceneManager.transitioning = true;
     SceneManager.closeScene(function () {
       sceneManager.setScene(targetScene);
+      if (cb != null) cb();
       SceneManager.openScene(function () {
         sceneManager.transitioning = false;
       });
