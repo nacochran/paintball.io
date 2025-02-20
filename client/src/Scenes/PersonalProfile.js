@@ -6,20 +6,8 @@ import UI from "../utils/UI.js";
 // forward declare variables
 let scene, camera, renderer;
 
-// current state of this menu scene
-/*
- * invalid-verification
- * login
- * profile
- * public-profile
- * register
- * resend-verification
- * signup-successful
- * welcome
-*/
-
-const menuScene = {
-  name: "Menu",
+const personalProfileScene = {
+  name: "Personal Profile",
   init: function () {
     // Setup Three.js
     scene = new THREE.Scene();
@@ -37,7 +25,7 @@ const menuScene = {
     UI.fill(0, 0, 0);
     UI.textSize(50);
     UI.textAlign("center", "top");
-    UI.text("Paintball.io", UI.width / 2, 150);
+    UI.text("Personal Profile", 25, 150);
   },
   buttons: [
     new Button({
@@ -64,45 +52,13 @@ const menuScene = {
         UI.textStyle('Arial');
         UI.fill(0, 0, 0);
         UI.textAlign("center", "bottom");
-        UI.text('Play', this.x + this.width / 2, this.y + this.height - 15);
+        UI.text('Home', this.x + this.width / 2, this.y + this.height - 15);
       },
       onClick: function () {
-        sceneManager.createTransition('play');
-      }
-    }),
-    // Login OR Profile
-    // TODO Switch Button to Profile
-    new Button({
-      x: UI.width / 2 - 65,
-      y: 425,
-      width: 100,
-      height: 50,
-      display: function () {
-        UI.stroke(255, 255, 255);
-        UI.strokeWeight(5);
-
-        // Button color changes on hover
-        if (this.isInside(mouse, this)) {
-          UI.fill(175, 175, 175);
-          mouse.setCursor('pointer');
-        } else {
-          UI.fill(200, 200, 200, 200);
-        }
-
-        // Draw the button rectangle
-        UI.rect(this.x, this.y, this.width, this.height, 10);
-
-        UI.textSize(20);
-        UI.textStyle('Arial');
-        UI.fill(0, 0, 0);
-        UI.textAlign("center", "bottom");
-        UI.text('Login', this.x + this.width / 2, this.y + this.height - 15);
-      },
-      onClick: function () {
-        sceneManager.createTransition('login');
+        sceneManager.createTransition('menu');
       }
     })
   ]
 };
 
-export default menuScene;
+export default personalProfileScene;

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    Paintball.io
+  </title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+  <!-- 3D Canvas for Three.js -->
+  <div id="threed-canvas"></div>
+
+  <!-- 2D Canvas for App UI -->
+  <canvas id="ui-canvas"></canvas>
+
+  <!-- 
+   Utility Functions 
+   TODO: Move to front-end 
+   -->
+  <script src="js/library.js"></script>
+
+  <!-- 
+    -- Grab JS file generated from VITE on the front-end 
+    -- Contains app functionality for Three.js 3D canvas (#threed-canvas)
+   -->
+  <script src="client/dist/public/<%= jsFile %>"></script>
+
+
+  <!-- Data served from back-end -->
+  <p class="user-data">
+    <%= user %> <!-- Probably want to break up into individual username status items-->
+  </p>
+  <p class="error">
+    <%= error %>
+  </p>
+  <p class="message">
+    <%= message %>
+  </p>
+
+  <!-- <footer>
+    <p>&copy; 2025 MyWebsite. All rights reserved.</p>
+  </footer> -->
+</body>
+
+</html>

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import Button from "../EventObjects/Button.js";
-import { mouse, keys, sceneManager, UICanvas } from "../Globals.js";
+import { mouse, keys, sceneManager, UICanvas, TESTING } from "../Globals.js";
 import Player from "../GameObjects/Player.js";
 import Block from "../GameObjects/Block.js";
 import { Shape, ShapeBuilder } from "../utils/ShapeHelper.js";
@@ -45,7 +45,7 @@ class Game {
 
     // Instantiate PointerLockControls (remove FirstPersonControls entirely)
     this.pointerLockControls = new PointerLockControls(camera, renderer.domElement);
-    scene.add(this.pointerLockControls.getObject());
+    scene.add(this.pointerLockControls.object);
 
     // Request pointer lock on click
     renderer.domElement.addEventListener('click', () => {
@@ -56,9 +56,10 @@ class Game {
     camera.position.copy(player.position).add(new THREE.Vector3(0, 1.5, 0));
 
     // Imports Custom Shape (your existing GLTF loading code)
+    const url = (TESTING) ? "./assets/gltf/TestLevelOne.glb" : "client/dist/public/assets/gltf/TestLevelOne.glb";
     const testImportShape = new Shape({
       type: 'gltf',
-      url: 'client/dist/public/assets/gltf/TestLevelOne.glb',
+      url: url,
       scene: scene,
       size: { width: 1, height: 1, depth: 1 },
       position: new THREE.Vector3(0, -50, 0),
@@ -133,8 +134,8 @@ const playScene = {
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
-    document.getElementById("3d-canvas").innerHTML = '';
-    document.getElementById("3d-canvas").appendChild(renderer.domElement);
+    document.getElementById("threed-canvas").innerHTML = '';
+    document.getElementById("threed-canvas").appendChild(renderer.domElement);
 
     // Add pointer lock event listeners here:
     renderer.domElement.addEventListener('click', () => {
