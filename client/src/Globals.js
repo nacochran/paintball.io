@@ -10,4 +10,6 @@ const sceneManager = new SceneManager({});
 
 const UICanvas = document.getElementById('ui-canvas');
 
-export { mouse, keys, sceneManager, timeManager, UICanvas };
+const TESTING = true;
+
+export { mouse, keys, sceneManager, timeManager, UICanvas, TESTING };
