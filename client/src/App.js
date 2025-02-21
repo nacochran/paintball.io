@@ -18,6 +18,7 @@ keys.register("RIGHT", "ArrowRight");
 keys.register("Space", "Space");
 keys.register("Shift", "ShiftLeft");
 keys.register("Ctrl", "ControlLeft");
+keys.register("C", "KeyC");
 
 // Register Button (Shape) Types
 Button.registerType('rect', rectToRect);
