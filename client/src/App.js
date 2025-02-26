@@ -7,8 +7,8 @@ import playScene from "./Scenes/Play.js";
 import menuScene from "./Scenes/Menu.js";
 import loginScene from "./Scenes/Login.js";
 import signupScene from "./Scenes/Signup.js";
-import publicProfileScene from "./Scenes/PersonalProfile.js";
-import personalProfileScene from "./Scenes/PublicProfile.js";
+import personalProfileScene from "./Scenes/PersonalProfile.js";
+import publicProfileScene from "./Scenes/PublicProfile.js";
 import settingsScene from "./Scenes/Settings.js";
 
 // Register action labels for key codes
