@@ -10,6 +10,7 @@ const sceneManager = new SceneManager({});
 
 const UICanvas = document.getElementById('ui-canvas');
 
-const TESTING = true;
+// 'front-end' or 'back-end'
+const DEV_MODE = "back-end";
 
-export { mouse, keys, sceneManager, timeManager, UICanvas, TESTING };
+export { mouse, keys, sceneManager, timeManager, UICanvas, DEV_MODE };
