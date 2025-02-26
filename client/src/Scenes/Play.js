@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import Button from "../EventObjects/Button.js";
-import { mouse, keys, sceneManager, UICanvas, TESTING } from "../Globals.js";
+import { mouse, keys, sceneManager, UICanvas, DEV_MODE } from "../Globals.js";
 import Player from "../GameObjects/Player.js";
 import Block from "../GameObjects/Block.js";
 import { Shape, ShapeBuilder } from "../utils/ShapeHelper.js";
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import UI from "../utils/UI.js";
 
 // Forward-declare variables
 let scene, camera, renderer;
@@ -56,7 +57,7 @@ class Game {
     camera.position.copy(player.position).add(new THREE.Vector3(0, 1.5, 0));
 
     // Imports Custom Shape (your existing GLTF loading code)
-    const url = (TESTING) ? "./assets/gltf/TestLevelOne.glb" : "client/dist/public/assets/gltf/TestLevelOne.glb";
+    const url = (DEV_MODE == 'front-end') ? "./assets/gltf/TestLevelOne.glb" : "client/dist/public/assets/gltf/TestLevelOne.glb";
     const testImportShape = new Shape({
       type: 'gltf',
       url: url,
@@ -162,29 +163,30 @@ const playScene = {
   },
   buttons: [
     new Button({
-      x: window.innerWidth - 125,
-      y: 25,
+      x: 65,
+      y: 35,
       width: 100,
       height: 50,
       display: function () {
-        const ctx = UICanvas.getContext('2d');
+        UI.stroke(255, 255, 255);
+        UI.strokeWeight(5);
 
-        ctx.strokeStyle = 'rgb(255, 255, 255)';
-        ctx.lineWidth = 5;
-
+        // Button color changes on hover
         if (this.isInside(mouse, this)) {
-          ctx.fillStyle = 'rgb(175, 175, 175)';
+          UI.fill(175, 175, 175);
           mouse.setCursor('pointer');
         } else {
-          ctx.fillStyle = 'rgb(200, 200, 200, 200)';
+          UI.fill(200, 200, 200, 200);
         }
 
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        // Draw the button rectangle
+        UI.rect(this.x, this.y, this.width, this.height, 10);
 
-        ctx.font = '20px Arial';
-        ctx.fillStyle = 'rgb(0, 0, 0)';
-        ctx.fillText('Home', this.x + 23, this.y + 31);
+        UI.textSize(20);
+        UI.textStyle('Arial');
+        UI.fill(0, 0, 0);
+        UI.textAlign("center", "bottom");
+        UI.text('Home', this.x + this.width / 2, this.y + this.height - 15);
       },
       onClick: function () {
         sceneManager.createTransition('menu');
