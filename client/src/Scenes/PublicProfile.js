@@ -29,8 +29,8 @@ const publicProfileScene = {
   },
   buttons: [
     new Button({
-      x: UI.width / 2 - 65,
-      y: 325,
+      x: 65,
+      y: 35,
       width: 100,
       height: 50,
       display: function () {

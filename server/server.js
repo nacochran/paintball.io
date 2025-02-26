@@ -135,7 +135,7 @@ await db.test_connection();
 
 // Welcome Page
 app.get("/", (req, res) => {
-  res.render("pages/welcome", {
+  res.render("layout", {
     user: req.user,
     error: null
   });
@@ -157,10 +157,11 @@ app.get("/profile", (req, res) => {
   if (!req.isAuthenticated()) {
     return res.redirect("/login");
   }
-  res.render("pages/profile", {
-    user: req.user,
-    error: null
-  });
+  /*<h1>Welcome, <%= user.username %>!</h1>
+  <p>Email: <%= user.email %>
+  </p>
+
+  <a><button onClick="sendPostRequest('logout')">Logout</button></a>*/
 });
 
 // Public Profile Page
@@ -198,10 +199,9 @@ app.get("/register", (req, res) => {
 
 // Signup Success Page
 app.get("/signup-successful", (req, res) => {
-  res.render("pages/signup-successful", {
-    user: req.user,
-    error: null
-  });
+  /* <h1>Sign Up Successful!</h1>
+  <p>Your account has been created successfully. Check your email for a verification email.</p>
+  <a href="/login"><button>Go to Login</button></a>*/
 });
 
 // Handle Signup
@@ -282,6 +282,7 @@ app.get("/verify", async (req, res) => {
       if (success) {
         res.render("pages/login", { user: req.user, error: null, message: "Account verified!" });
       } else {
+        /*<h1>Invalid or expired verification link.</h1>*/
         return res.render("pages/invalid-verification", { user: req.user });
       }
     });
@@ -293,7 +294,26 @@ app.get("/verify", async (req, res) => {
 });
 
 app.get("/resend-verification", (req, res) => {
-  res.render("pages/resend-verification", { error: null, message: null, user: req.user });
+  /* <h1>Resend Verification Email</h1>
+
+    <% if (error) { %>
+      <p style="color: red;">
+        <%= error %>
+      </p>
+      <% } %>
+
+        <% if (message) { %>
+          <p style="color: green;">
+            <%= message %>
+          </p>
+          <% } %>
+
+            <form action="/resend-verification" method="POST">
+              <label for="email">Enter your email:</label>
+              <input type="email" id="email" name="email" required>
+              <br>
+              <button type="submit">Resend Verification Email</button>
+            </form>*/
 });
 
 // resend verification

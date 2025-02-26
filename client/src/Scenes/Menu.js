@@ -6,43 +6,22 @@ import UI from "../utils/UI.js";
 // forward declare variables
 let scene, camera, renderer;
 
-// current state of this menu scene
-/*
- * invalid-verification
- * login
- * profile
- * public-profile
- * register
- * resend-verification
- * signup-successful
- * welcome
-*/
+// place holder
+let user = {
+  username: "ncochran",
+  email: "nacochranpb@gmail.com"
+};
 
-const menuScene = {
-  name: "Menu",
-  init: function () {
-    // Setup Three.js
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.getElementById("threed-canvas").innerHTML = '';
-    document.getElementById("threed-canvas").appendChild(renderer.domElement);
+user = null;
 
-    // setup UI canvas dimensions
-    UI.width = window.innerWidth;
-    UI.height = window.innerHeight;
-  },
-  display: function () {
-    UI.fill(0, 0, 0);
-    UI.textSize(50);
-    UI.textAlign("center", "top");
-    UI.text("Paintball.io", UI.width / 2, 150);
-  },
-  buttons: [
-    new Button({
-      x: UI.width / 2 - 65,
-      y: 325,
+function createMenuButtons(state) {
+  let buttons = [];
+
+  if (state == "guest-view") {
+    // Play Button
+    buttons.push(new Button({
+      x: UI.width / 2 - 60,
+      y: 300,
       width: 100,
       height: 50,
       display: function () {
@@ -69,12 +48,43 @@ const menuScene = {
       onClick: function () {
         sceneManager.createTransition('play');
       }
-    }),
-    // Login OR Profile
-    // TODO Switch Button to Profile
-    new Button({
-      x: UI.width / 2 - 65,
-      y: 425,
+    }));
+
+    // Login & Register Buttons
+    buttons.push(new Button({
+      x: UI.width / 2 - 60,
+      y: 400,
+      width: 100,
+      height: 50,
+      display: function () {
+        UI.stroke(255, 255, 255);
+        UI.strokeWeight(5);
+
+        // Button color changes on hover
+        if (this.isInside(mouse, this)) {
+          UI.fill(175, 175, 175);
+          mouse.setCursor('pointer');
+        } else {
+          UI.fill(200, 200, 200, 200);
+        }
+
+        // Draw the button rectangle
+        UI.rect(this.x, this.y, this.width, this.height, 10);
+
+        UI.textSize(20);
+        UI.textStyle('Arial');
+        UI.fill(0, 0, 0);
+        UI.textAlign("center", "bottom");
+        UI.text('Signup', this.x + this.width / 2, this.y + this.height - 15);
+      },
+      onClick: function () {
+        sceneManager.createTransition('signup');
+      }
+    }));
+
+    buttons.push(new Button({
+      x: UI.width / 2 - 60,
+      y: 500,
       width: 100,
       height: 50,
       display: function () {
@@ -101,8 +111,161 @@ const menuScene = {
       onClick: function () {
         sceneManager.createTransition('login');
       }
-    })
-  ]
+    }));
+  } else {
+    // Play Button
+    buttons.push(new Button({
+      x: UI.width / 2 - 60,
+      y: 300,
+      width: 100,
+      height: 50,
+      display: function () {
+        UI.stroke(255, 255, 255);
+        UI.strokeWeight(5);
+
+        // Button color changes on hover
+        if (this.isInside(mouse, this)) {
+          UI.fill(175, 175, 175);
+          mouse.setCursor('pointer');
+        } else {
+          UI.fill(200, 200, 200, 200);
+        }
+
+        // Draw the button rectangle
+        UI.rect(this.x, this.y, this.width, this.height, 10);
+
+        UI.textSize(20);
+        UI.textStyle('Arial');
+        UI.fill(0, 0, 0);
+        UI.textAlign("center", "bottom");
+        UI.text('Play', this.x + this.width / 2, this.y + this.height - 15);
+      },
+      onClick: function () {
+        sceneManager.createTransition('play');
+      }
+    }));
+
+    // Settings and Profile buttons
+    buttons.push(new Button({
+      x: UI.width / 2 - 60,
+      y: 400,
+      width: 100,
+      height: 50,
+      display: function () {
+        UI.stroke(255, 255, 255);
+        UI.strokeWeight(5);
+
+        // Button color changes on hover
+        if (this.isInside(mouse, this)) {
+          UI.fill(175, 175, 175);
+          mouse.setCursor('pointer');
+        } else {
+          UI.fill(200, 200, 200, 200);
+        }
+
+        // Draw the button rectangle
+        UI.rect(this.x, this.y, this.width, this.height, 10);
+
+        UI.textSize(20);
+        UI.textStyle('Arial');
+        UI.fill(0, 0, 0);
+        UI.textAlign("center", "bottom");
+        UI.text('Profile', this.x + this.width / 2, this.y + this.height - 15);
+      },
+      onClick: function () {
+        sceneManager.createTransition('personal-profile');
+      }
+    }));
+
+    buttons.push(new Button({
+      x: UI.width / 2 - 60,
+      y: 500,
+      width: 100,
+      height: 50,
+      display: function () {
+        UI.stroke(255, 255, 255);
+        UI.strokeWeight(5);
+
+        // Button color changes on hover
+        if (this.isInside(mouse, this)) {
+          UI.fill(175, 175, 175);
+          mouse.setCursor('pointer');
+        } else {
+          UI.fill(200, 200, 200, 200);
+        }
+
+        // Draw the button rectangle
+        UI.rect(this.x, this.y, this.width, this.height, 10);
+
+        UI.textSize(20);
+        UI.textStyle('Arial');
+        UI.fill(0, 0, 0);
+        UI.textAlign("center", "bottom");
+        UI.text('Settings', this.x + this.width / 2, this.y + this.height - 15);
+      },
+      onClick: function () {
+        sceneManager.createTransition('settings');
+      }
+    }));
+
+    buttons.push(new Button({
+      x: UI.width / 2 - 60,
+      y: 600,
+      width: 100,
+      height: 50,
+      display: function () {
+        UI.stroke(255, 255, 255);
+        UI.strokeWeight(5);
+
+        // Button color changes on hover
+        if (this.isInside(mouse, this)) {
+          UI.fill(175, 175, 175);
+          mouse.setCursor('pointer');
+        } else {
+          UI.fill(200, 200, 200, 200);
+        }
+
+        // Draw the button rectangle
+        UI.rect(this.x, this.y, this.width, this.height, 10);
+
+        UI.textSize(20);
+        UI.textStyle('Arial');
+        UI.fill(0, 0, 0);
+        UI.textAlign("center", "bottom");
+        UI.text('Logout', this.x + this.width / 2, this.y + this.height - 15);
+      },
+      onClick: function () {
+        sendPostRequest('logout')
+      }
+    }));
+  }
+
+  return buttons;
+}
+
+// current state of this menu scene
+const menuScene = {
+  name: "Menu",
+  init: function () {
+    // Setup Three.js
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById("threed-canvas").innerHTML = '';
+    document.getElementById("threed-canvas").appendChild(renderer.domElement);
+
+    // setup UI canvas dimensions
+    UI.width = window.innerWidth;
+    UI.height = window.innerHeight;
+  },
+  display: function () {
+    UI.fill(0, 0, 0);
+    UI.textSize(50);
+    UI.textAlign("center", "top");
+    UI.text("Paintball.io", UI.width / 2, 150);
+  },
+  buttons: createMenuButtons((user == null) ? ("guest-view") : ("personal-view"))
 };
 
 export default menuScene;

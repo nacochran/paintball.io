@@ -25,12 +25,12 @@ const settingsScene = {
     UI.fill(0, 0, 0);
     UI.textSize(50);
     UI.textAlign("center", "top");
-    UI.text("Settings", 25, 150);
+    UI.text("Settings", UI.width / 2, 150);
   },
   buttons: [
     new Button({
-      x: UI.width / 2 - 65,
-      y: 325,
+      x: 65,
+      y: 35,
       width: 100,
       height: 50,
       display: function () {

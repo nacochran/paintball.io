@@ -20,6 +20,33 @@ const loginScene = {
     // setup UI canvas dimensions
     UI.width = window.innerWidth;
     UI.height = window.innerHeight;
+
+    /////////////////////////
+    // Create Form
+    /////////////////////////
+    // Create Form using innerHTML +=
+    document.querySelector('.html-content').innerHTML += `
+
+<div id="login-form-div">
+  <p class='error'>none</p>
+  <p class='message'>message</p>
+
+  <form action="/login" method="POST" id="login-form">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <br>
+    <button type="submit">Login</button>
+  </form>
+
+  <!-- Only Display if Error Message is "not_verified" -->
+  <form action="/resend-verification" method="GET">
+    <button id="resend-verification" type="submit">Resend Verification Email</button>
+  </form>
+</div>
+`;
   },
   display: function () {
     UI.fill(0, 0, 0);
