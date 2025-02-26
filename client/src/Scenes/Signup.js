@@ -20,6 +20,31 @@ const signupScene = {
     // setup UI canvas dimensions
     UI.width = window.innerWidth;
     UI.height = window.innerHeight;
+
+    /////////////////////////
+    // Create Form
+    /////////////////////////
+    // Create Form using innerHTML +=
+    document.querySelector('.html-content').innerHTML += `
+
+<div id="login-form-div">
+  <p class='error'>none</p>
+  <p class='message'>message</p>
+
+  <form action="/register" method="POST">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+        <br>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        <br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+        <br>
+        <button type="submit">Sign Up</button>
+      </form>
+</div>
+`;
   },
   display: function () {
     UI.fill(0, 0, 0);
@@ -29,8 +54,8 @@ const signupScene = {
   },
   buttons: [
     new Button({
-      x: UI.width / 2 - 65,
-      y: 325,
+      x: 65,
+      y: 35,
       width: 100,
       height: 50,
       display: function () {
