@@ -17,7 +17,7 @@ const loginScene = {
     document.getElementById("threed-canvas").innerHTML = '';
     document.getElementById("threed-canvas").appendChild(renderer.domElement);
 
-    // setup UI canvas dimensions
+    // setup UI canvas dimensions 
     UI.width = window.innerWidth;
     UI.height = window.innerHeight;
 
@@ -28,10 +28,23 @@ const loginScene = {
     document.querySelector('.html-content').innerHTML += `
 
 <div id="login-form-div">
-  <p class='error'>none</p>
-  <p class='message'>message</p>
+  <p id='error'>none</p>
+  <p id='message'>message</p>
 
-  <form action="/login" method="POST" id="login-form">
+  <!-- Only Display if Error Message is "not_verified" -->
+  <form id="resend-verification" >
+    <label for="email">Email:</label>
+    <input name="email" required>
+    <button type="submit">Resend Verification Email</button>
+  </form>
+
+  <form id="verification-form">
+        <label for="verificationCode">Verification Code:</label>
+        <input type="text" id="verificationCode" name="verificationCode" required maxlength="6">
+        <button type="submit">Verify</button>
+    </form>
+
+  <form id="login-form">
     <label for="username">Username:</label>
     <input type="text" id="username" name="username" required>
     <br>
@@ -40,13 +53,126 @@ const loginScene = {
     <br>
     <button type="submit">Login</button>
   </form>
-
-  <!-- Only Display if Error Message is "not_verified" -->
-  <form action="/resend-verification" method="GET">
-    <button id="resend-verification" type="submit">Resend Verification Email</button>
-  </form>
 </div>
 `;
+    const error = document.getElementById("error");
+    const message = document.getElementById("message");
+    const loginForm = document.getElementById("login-form");
+    const resendVerificationForm = document.getElementById("resend-verification");
+    const verificationForm = document.getElementById("verification-form");
+
+
+    error.style.display = "none";
+    message.style.display = "none";
+    resendVerificationForm.style.display = "none";
+    verificationForm.style.display = "none";
+
+    loginForm.addEventListener("submit", async function (event) {
+      // Prevents page reload
+      event.preventDefault();
+
+      // Gather form data
+      const formData = new FormData(this);
+
+      const response = await fetch('/login', {
+        method: 'POST',
+        body: JSON.stringify(Object.fromEntries(formData)),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Process response
+      const result = await response.json();
+
+      error.style.display = "none";
+      message.style.display = "none";
+
+      if (result.error) {
+        error.innerText = result.error;
+        error.style.display = "block";
+
+        if (result.err_code && result.err_code == "not_verified") {
+          resendVerificationForm.style.display = "block";
+        }
+      }
+
+      // Successful Login
+      if (result.message) {
+        //message.style.display = "block";
+        //message.innerText = result.message;
+        sceneManager.createTransition('menu');
+      }
+    });
+
+    verificationForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const code = document.getElementById("verificationCode").value;
+
+      // Send AJAX request to backend
+      const response = await fetch('/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ verificationCode: code })
+      });
+
+      const result = await response.json();
+
+      error.style.display = "none";
+      message.style.display = "none";
+
+      if (result.error) {
+        error.innerText = result.error;
+        error.style.display = "block";
+        if (result.err_code && result.err_code === "invalid_code") {
+          resendVerificationForm.style.display = "block";
+          document.getElementById("verificationCode").value = "";
+        }
+      }
+      if (result.message) {
+        message.style.display = "block";
+        message.innerText = result.message;
+        verificationForm.style.display = "none";
+        resendVerificationForm.style.display = "none";
+      }
+    });
+
+    resendVerificationForm.addEventListener("submit", async function (event) {
+      // Prevents page reload
+      event.preventDefault();
+
+      // Gather form data
+      const formData = new FormData(this);
+
+      const response = await fetch('/resend-verification', {
+        method: 'POST',
+        body: JSON.stringify(Object.fromEntries(formData)),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Process response
+      const result = await response.json();
+
+      error.style.display = "none";
+      message.style.display = "none";
+
+      if (result.error) {
+        error.innerText = result.error;
+        error.style.display = "block";
+      }
+      if (result.message) {
+        message.style.display = "block";
+        message.innerText = result.message;
+        resendVerificationForm.style.display = "none";
+        verificationForm.style.display = "block";
+      }
+    });
+
   },
   display: function () {
     UI.fill(0, 0, 0);
