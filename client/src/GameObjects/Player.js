@@ -49,10 +49,14 @@ export default class Player extends PhysicsEntity {
     // For infinite turning, accumulate yaw changes.
     this.totalYaw = 0;
     this.lastCameraYaw = undefined;
+
+    // For long jump: record the time when sliding starts.
+    this.slideStartTime = null;
   }
 
   /**
    * Process input to set the wish direction and target speed.
+   * Also handles jumping and, if sliding, triggers a long jump.
    */
   handleMovement() {
     if (!this.camera) {
@@ -85,34 +89,54 @@ export default class Player extends PhysicsEntity {
     // Determine the player's state and target speed.
     // If both sprint (Shift) and crouch (C) are pressed, enter sliding mode.
     if (keys.pressed("Shift") && keys.pressed("C")) {
+      // Record slide start time when entering sliding mode.
+      if (this.state !== "sliding") {
+        this.slideStartTime = Date.now() / 1000;
+      }
       this.state = "sliding";
-      this.targetSpeed = this.slidingSpeed; // faster than normal crouch
+      this.targetSpeed = this.slidingSpeed; // Faster than normal crouch
       this.size = { width: 1, height: 1, depth: 1 };
     } else if (keys.pressed("C")) {
       this.state = "crouching";
       this.targetSpeed = this.crouchingSpeed;
       this.size = { width: 1, height: 1, depth: 1 };
+      this.slideStartTime = null;
     } else if (keys.pressed("Shift")) {
       this.state = "sprinting";
       this.targetSpeed = this.sprintSpeed;
+      this.slideStartTime = null;
     } else {
       this.state = "walking";
       this.targetSpeed = this.walkSpeed;
       this.size = { width: 1, height: 2, depth: 1 };
+      this.slideStartTime = null;
     }
   
     // Jump if possible.
     if (keys.pressed("Space") && this.isGrounded) {
-      this.velocity.y = 30;
-      this.isGrounded = false;
+      // If sliding and jump occurs quickly after sliding starts, perform a long jump.
+      if (this.state === "sliding" && this.slideStartTime && ((Date.now() / 1000) - this.slideStartTime < 0.3)) {
+        // Long jump: give a higher vertical impulse and add extra forward boost.
+        this.velocity.y = 25; // Higher vertical jump
+        const boost = this.wishDir.clone().multiplyScalar(20); // Adjust boost factor as needed
+        this.velocity.add(boost);
+        this.isGrounded = false;
+        // Reset slide start time so the long jump only occurs once.
+        this.slideStartTime = null;
+        this.state = "longJump";
+      } else {
+        // Normal jump.
+        this.velocity.y = 15;
+        this.isGrounded = false;
+      }
     }
   
     // Handle shooting.
     if (keys.pressed("LeftMouseButton")) {
       console.log("I am shooting! PEW! PEW! PEW!");
     }
-  }  
-
+  }
+  
   /**
    * Main update loop for the player.
    * Processes input, updates physics, handles collisions,
@@ -173,13 +197,11 @@ export default class Player extends PhysicsEntity {
       // Update the quaternion from the total yaw.
       this.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.totalYaw);
   
-      // Update the Euler rotation from the quaternion if needed.
+      // Update the Euler rotation from the quaternion.
       this.rotation.setFromQuaternion(this.quaternion);
   
-      // Now the attached Shape update() will apply this.rotation to its mesh.
-      // (Also, if your bounding box uses the entity's rotation, update it explicitly.)
+      // Update bounding box rotation if needed.
       if (this.boundingBox) {
-        // For example, if the bounding box has a rotation property:
         if (this.boundingBox.rotation) {
           this.boundingBox.rotation.copy(this.rotation);
         }
