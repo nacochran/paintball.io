@@ -6,13 +6,8 @@ import UI from "../utils/UI.js";
 // forward declare variables
 let scene, camera, renderer;
 
-// place holder
-let user = {
-  username: "ncochran",
-  email: "nacochranpb@gmail.com"
-};
-
-user = null;
+// user
+let user = null;
 
 function createMenuButtons(state) {
   let buttons = [];
@@ -245,8 +240,8 @@ function createMenuButtons(state) {
 
 // current state of this menu scene
 const menuScene = {
-  name: "Menu",
-  init: function () {
+  name: "menu",
+  init: async function () {
     // Setup Three.js
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -258,6 +253,20 @@ const menuScene = {
     // setup UI canvas dimensions
     UI.width = window.innerWidth;
     UI.height = window.innerHeight;
+
+    // get user data from the back-end
+    await fetch('/authenticated-user')
+      .then(response => response.json())
+      .then(result => {
+        if (result.error) {
+          user = null;
+        } else {
+          user = result.user;
+        }
+      })
+      .catch(error => console.error("AJAX request failed:", error));
+
+    sceneManager.scenes['menu'].buttons = createMenuButtons((user == null) ? ("guest-view") : ("personal-view"));
   },
   display: function () {
     UI.fill(0, 0, 0);
@@ -265,7 +274,7 @@ const menuScene = {
     UI.textAlign("center", "top");
     UI.text("Paintball.io", UI.width / 2, 150);
   },
-  buttons: createMenuButtons((user == null) ? ("guest-view") : ("personal-view"))
+  buttons: []
 };
 
 export default menuScene;

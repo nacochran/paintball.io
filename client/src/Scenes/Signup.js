@@ -28,10 +28,17 @@ const signupScene = {
     document.querySelector('.html-content').innerHTML += `
 
 <div id="login-form-div">
-  <p class='error'>none</p>
-  <p class='message'>message</p>
+  <p id='error'>none</p>
+  <p id='message'>message</p>
 
-  <form action="/register" method="POST">
+  <!-- Only Display if Error Message is "not_verified" -->
+  <form id="resend-verification" >
+    <label for="email">Email:</label>
+    <input name="email" required>
+    <button type="submit">Get New Code</button>
+  </form>
+
+  <form id="registerForm">
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required>
         <br>
@@ -43,8 +50,136 @@ const signupScene = {
         <br>
         <button type="submit">Sign Up</button>
       </form>
+
+    <form id="verificationForm">
+        <label for="verificationCode">Verification Code:</label>
+        <input type="text" id="verificationCode" name="verificationCode" required maxlength="6">
+        <button type="submit">Verify</button>
+    </form>
+
+    <button id="login-button">Go to Login</button>
 </div>
 `;
+
+    const error = document.getElementById("error");
+    const message = document.getElementById("message");
+    const registerForm = document.getElementById("registerForm");
+    const verificationForm = document.getElementById("verificationForm");
+    const loginButton = document.getElementById("login-button");
+    const resendVerificationForm = document.getElementById("resend-verification");
+
+    loginButton.addEventListener("click", function () {
+      sceneManager.createTransition("login");
+    });
+
+
+    error.style.display = "none";
+    message.style.display = "none";
+    verificationForm.style.display = "none";
+    resendVerificationForm.style.display = "none";
+    loginButton.style.display = "none";
+
+    registerForm.addEventListener("submit", async function (event) {
+      // Prevents page reload
+      event.preventDefault();
+
+      // Gather form data
+      const formData = new FormData(this);
+
+      const response = await fetch('/register', {
+        method: 'POST',
+        body: JSON.stringify(Object.fromEntries(formData)),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Process response
+      const result = await response.json();
+
+      error.style.display = "none";
+      message.style.display = "none";
+
+      if (result.error) {
+        error.innerText = result.error;
+        error.style.display = "block";
+      }
+      if (result.message) {
+        message.style.display = "block";
+        message.innerText = result.message;
+        registerForm.style.display = "none";
+        verificationForm.style.display = "block";
+      }
+    });
+
+    verificationForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const code = document.getElementById("verificationCode").value;
+
+      // Send AJAX request to backend
+      const response = await fetch('/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ verificationCode: code })
+      });
+
+      const result = await response.json();
+
+      error.style.display = "none";
+      message.style.display = "none";
+
+      if (result.error) {
+        error.innerText = result.error;
+        error.style.display = "block";
+        if (result.err_code && result.err_code === "invalid_code") {
+          resendVerificationForm.style.display = "block";
+          document.getElementById("verificationCode").value = "";
+        }
+      }
+      if (result.message) {
+        message.style.display = "block";
+        message.innerText = result.message;
+        verificationForm.style.display = "none";
+        resendVerificationForm.style.display = "none";
+        loginButton.style.display = "block";
+      }
+    });
+
+    resendVerificationForm.addEventListener("submit", async function (event) {
+      // Prevents page reload
+      event.preventDefault();
+
+      // Gather form data
+      const formData = new FormData(this);
+
+      const response = await fetch('/resend-verification', {
+        method: 'POST',
+        body: JSON.stringify(Object.fromEntries(formData)),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Process response
+      const result = await response.json();
+
+      error.style.display = "none";
+      message.style.display = "none";
+
+      if (result.error) {
+        error.innerText = result.error;
+        error.style.display = "block";
+      }
+      if (result.message) {
+        message.style.display = "block";
+        message.innerText = result.message;
+        resendVerificationForm.style.display = "none";
+        verificationForm.style.display = "block";
+      }
+    });
   },
   display: function () {
     UI.fill(0, 0, 0);
