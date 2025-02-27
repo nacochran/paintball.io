@@ -11,7 +11,7 @@ export default class Player extends PhysicsEntity {
     // Define player size.
     this.size = { width: 1, height: 2, depth: 1 };
 
-    // Define health
+    // Define health.
     this.health = 100;
 
     // Save the camera reference for movement calculations.
@@ -21,13 +21,15 @@ export default class Player extends PhysicsEntity {
     this.state = "idle";
 
     // Maximum speeds.
-    this.walkSpeed = 10;    // Maximum horizontal speed (walking)
-    this.sprintSpeed = 20;  // Maximum horizontal speed (sprinting)
-    this.crouchingSpeed = 7; // Maximum horizontal speed (crouching)
-    this.slidingSpeed =  20; // Maximum horizontal speed (sliding)
+    this.walkSpeed = 10;    // Walking speed.
+    this.sprintSpeed = 20;  // Sprinting speed.
+    this.crouchingSpeed = 7; // Crouching speed.
+    this.slidingSpeed = 20;  // Sliding speed.
 
-    // Rotation for orientation.
+    // Rotation for orientation (Euler used for compatibility, but we will also use a quaternion).
     this.rotation = new THREE.Euler(0, 0, 0);
+    // Create a quaternion property to store the full rotation.
+    this.quaternion = new THREE.Quaternion();
 
     // Set up the visual shape.
     this.shape = new Shape({
@@ -36,10 +38,17 @@ export default class Player extends PhysicsEntity {
       position: this.position,
       color: 0x00ff00
     });
+    // Attach the shape to this entity.
     this.shape.attach(this);
+    // Add the shape's mesh to the scene.
+    scene.add(this.shape.mesh);
 
     // Set up the bounding box.
     this.boundingBox = new BoundingBox(this, scene);
+
+    // For infinite turning, accumulate yaw changes.
+    this.totalYaw = 0;
+    this.lastCameraYaw = undefined;
   }
 
   /**
@@ -51,95 +60,131 @@ export default class Player extends PhysicsEntity {
       return;
     }
   
-    // Compute the camera’s forward direction.
+    // Get the camera’s forward direction.
     const forward = new THREE.Vector3();
     this.camera.getWorldDirection(forward);
-    forward.y = 0; // flatten the vector so movement stays horizontal
+    forward.y = 0;
     forward.normalize();
   
-    // Compute the camera’s right vector.
+    // Get the camera’s right vector.
     const right = new THREE.Vector3();
     right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
   
-    // Initialize a movement vector.
+    // Build the movement vector.
     const move = new THREE.Vector3();
     if (keys.pressed("W")) move.add(forward);
     if (keys.pressed("S")) move.sub(forward);
     if (keys.pressed("A")) move.sub(right);
     if (keys.pressed("D")) move.add(right);
   
-    // Normalize if there is movement.
     if (move.lengthSq() > 0) {
       move.normalize();
     }
     this.wishDir.copy(move);
   
     // Determine the player's state and target speed.
-    // Check sliding first if that combination is desired.
-    if (keys.pressed("ShiftLeft") && keys.pressed("C") && this.velocity.length() >= 15) {
+    // If both sprint (Shift) and crouch (C) are pressed, enter sliding mode.
+    if (keys.pressed("Shift") && keys.pressed("C")) {
       this.state = "sliding";
-      this.targetSpeed = this.slidingSpeed;
+      this.targetSpeed = this.slidingSpeed; // faster than normal crouch
       this.size = { width: 1, height: 1, depth: 1 };
     } else if (keys.pressed("C")) {
       this.state = "crouching";
       this.targetSpeed = this.crouchingSpeed;
       this.size = { width: 1, height: 1, depth: 1 };
     } else if (keys.pressed("Shift")) {
-      // Sprint only when the shift key is held.
       this.state = "sprinting";
       this.targetSpeed = this.sprintSpeed;
     } else {
-      // Default to walking if shift isn't held.
       this.state = "walking";
       this.targetSpeed = this.walkSpeed;
       this.size = { width: 1, height: 2, depth: 1 };
     }
   
-    // Handle jumping.
+    // Jump if possible.
     if (keys.pressed("Space") && this.isGrounded) {
       this.velocity.y = 30;
       this.isGrounded = false;
     }
   
-    // Handle Shooting.
-    if (keys.pressed("MouseButtonOne")){
+    // Handle shooting.
+    if (keys.pressed("LeftMouseButton")) {
       console.log("I am shooting! PEW! PEW! PEW!");
     }
-  }
-   
-
-  /**
-   * Funtion to heal the player based on an input amount.
-   * @param {*} healAmount 
-   */
-  heal(healAmount) {
-    this.health += healAmount; 
-  }
-
-  /**
-   * Deal damage to player based on a damage amount.
-   * @param {*} damageAmount 
-   */
-  damage(damageAmount) {
-    this.health -= damageAmount;
-  }
+  }  
 
   /**
    * Main update loop for the player.
-   * Processes input, updates physics, and handles collisions.
+   * Processes input, updates physics, handles collisions,
+   * and updates rotation and transforms for both the shape and bounding box.
    */
   update(entities) {
+    // Update timer and accumulate fixed time steps.
     this.timer.update();
     this.accumulatedTime += this.timer.getDelta();
-    //this.fixedUpdate();
+  
     while (this.accumulatedTime >= this.fixedDelta) {
+      // Save state for interpolation.
+      this.previousPosition.copy(this.position);
+  
+      // Process input.
       this.handleMovement();
+  
+      // Fixed-step physics update.
       this.updatePhysics(this.fixedDelta);
+  
+      // Handle collisions.
       this.handleCollisions(entities);
+  
+      // Update bounding box.
+      if (this.boundingBox && typeof this.boundingBox.update === "function") {
+        this.boundingBox.update();
+      }
+  
       this.accumulatedTime -= this.fixedDelta;
-      console.log(this.state);
     }
+  
+    // Update the shape's transform based on the attached entity.
     this.shape.update();
-    this.boundingBox.update();
+  
+    // ---- Infinite Turning with the Camera using Quaternion ----
+    if (this.camera) {
+      // Extract the current camera yaw (using 'YXZ').
+      const cameraEuler = new THREE.Euler().setFromQuaternion(this.camera.quaternion, 'YXZ');
+      const currentCameraYaw = cameraEuler.y;
+  
+      // Initialize lastCameraYaw if needed.
+      if (this.lastCameraYaw === undefined) {
+        this.lastCameraYaw = currentCameraYaw;
+        this.totalYaw = currentCameraYaw;
+      }
+  
+      // Compute change in yaw.
+      let deltaYaw = currentCameraYaw - this.lastCameraYaw;
+      // Adjust for wrap-around.
+      if (deltaYaw > Math.PI) {
+        deltaYaw -= 2 * Math.PI;
+      } else if (deltaYaw < -Math.PI) {
+        deltaYaw += 2 * Math.PI;
+      }
+      this.totalYaw += deltaYaw;
+      this.lastCameraYaw = currentCameraYaw;
+  
+      // Update the quaternion from the total yaw.
+      this.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.totalYaw);
+  
+      // Update the Euler rotation from the quaternion if needed.
+      this.rotation.setFromQuaternion(this.quaternion);
+  
+      // Now the attached Shape update() will apply this.rotation to its mesh.
+      // (Also, if your bounding box uses the entity's rotation, update it explicitly.)
+      if (this.boundingBox) {
+        // For example, if the bounding box has a rotation property:
+        if (this.boundingBox.rotation) {
+          this.boundingBox.rotation.copy(this.rotation);
+        }
+        this.boundingBox.update();
+      }
+    }
   }
 }
