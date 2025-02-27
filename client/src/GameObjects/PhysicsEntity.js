@@ -7,65 +7,47 @@ export default class PhysicsEntity extends Entity {
     super(config);
 
     // State vectors.
+    this.position = this.position || new THREE.Vector3();
     this.velocity = new THREE.Vector3(0, 0, 0);
     this.acceleration = new THREE.Vector3(0, 0, 0);
     this.appliedForces = new THREE.Vector3(0, 0, 0);
+    
+    // For interpolation:
+    this.previousPosition = this.position.clone();
+    this.renderPosition = this.position.clone();
+
     // Physical properties.
     this.mass = config.mass || 10;
     this.terminalVelocity = config.terminalVelocity || 20; // Maximum falling speed.
 
     // Grounding flag.
     this.isGrounded = false;
+    
     // Timer & fixed time step integration.
     this.timer = new Timer();
     this.timer.setTimescale(1);
     this.accumulatedTime = 0;
-    this.fixedDelta = 1 / 120;// 360 physics updates per second
+    this.fixedDelta = 1 / 120; // 120 frames
 
     // For Quake‑style movement:
-    // These will be set externally (e.g., by the Player subclass) based on input.
     this.wishDir = new THREE.Vector3(0, 0, 0); // Normalized desired horizontal direction.
-    this.targetSpeed = 0;                     // Desired horizontal speed.
+    this.targetSpeed = 50;                     // Desired horizontal speed.
   }
 
   // ─────────────────────────────
   // Helper Functions for Quake‑like Movement
   // ─────────────────────────────
 
-  /**
-   * Accelerate the current horizontal velocity toward the target speed.
-   * @param {THREE.Vector3} currentVel - The current horizontal velocity.
-   * @param {THREE.Vector3} wishDir - Normalized desired direction.
-   * @param {Number} targetSpeed - Desired horizontal speed.
-   * @param {Number} accel - Acceleration constant.
-   * @param {Number} deltaTime - Fixed time step.
-   * @returns {THREE.Vector3} Updated horizontal velocity.
-   */
   accelerate(currentVel, wishDir, targetSpeed, accel, deltaTime) {
-    // Calculate the desired velocity vector.
     const desiredVel = wishDir.clone().multiplyScalar(targetSpeed);
-
-    // Determine how much we need to change.
     const velDiff = desiredVel.sub(currentVel);
-
-    // The maximum change allowed this frame.
     const maxAccel = accel * deltaTime;
-
-    // If the difference is greater than maxAccel, clamp it.
     if (velDiff.length() > maxAccel) {
       velDiff.setLength(maxAccel);
     }
-    // Return the new velocity.
     return currentVel.add(velDiff);
   }
 
-  /**
-   * Apply friction to reduce horizontal speed.
-   * @param {THREE.Vector3} currentVel - The current horizontal velocity.
-   * @param {Number} friction - Friction constant.
-   * @param {Number} deltaTime - Fixed time step.
-   * @returns {THREE.Vector3} Updated horizontal velocity.
-   */
   applyGroundFriction(currentVel, friction, deltaTime) {
     const speed = currentVel.length();
     if (speed < 0.1) return new THREE.Vector3(0, 0, 0);
@@ -74,62 +56,51 @@ export default class PhysicsEntity extends Entity {
     return currentVel.clone().normalize().multiplyScalar(newSpeed);
   }
 
-  /**
-   * Apply gravity to the vertical component.
-   * (Gravity is applied here rather than via force integration.)
-   * @param {Number} deltaTime - Fixed time step.
-   * @returns {Number} The updated vertical velocity.
-   */
   applyGravity(deltaTime, currentVerticalVel) {
     const gravity = -50; // Adjust as needed.
     return currentVerticalVel + gravity * deltaTime;
   }
 
   // ─────────────────────────────
-  // Quake‑Style Physics Update
+  // Quake‑Style Physics Update using improved (trapezoidal) integration.
   // ─────────────────────────────
 
-  /**
-   * Update physics using a Quake‑like movement system.
-   * Separates horizontal and vertical motion, applies gravity,
-   * and uses custom acceleration and friction for horizontal movement.
-   * @param {Number} deltaTime - Fixed time step.
-   */
   updatePhysics(deltaTime) {
+    // Save previous velocity to use for position update.
+    const prevVelocity = this.velocity.clone();
+
     // Separate horizontal (X/Z) and vertical (Y) components.
     let horizontalVel = new THREE.Vector3(this.velocity.x, 0, this.velocity.z);
     let verticalVel = this.velocity.y;
 
-    // Apply gravity to vertical velocity.
+    // Apply gravity.
     verticalVel = this.applyGravity(deltaTime, verticalVel);
 
     // Horizontal movement:
     if (this.isGrounded) {
       if (this.wishDir.lengthSq() > 0) {
-        const groundAccel = 50; // Strong acceleration on ground.
+        const groundAccel = 50;
         horizontalVel = this.accelerate(horizontalVel, this.wishDir, this.targetSpeed, groundAccel, deltaTime);
       } else {
-        // No input: apply strong friction for quick stops.
         horizontalVel = this.applyGroundFriction(horizontalVel, 10, deltaTime);
       }
     } else {
-      // In air: allow limited air control.
       if (this.wishDir.lengthSq() > 0) {
-        const airAccel = 20; // Reduced acceleration in air.
+        const airAccel = 20;
         horizontalVel = this.accelerate(horizontalVel, this.wishDir, this.targetSpeed, airAccel, deltaTime);
       }
-      // Apply mild friction in the air.
       horizontalVel = this.applyGroundFriction(horizontalVel, 2, deltaTime);
     }
 
-    // Reassemble the overall velocity.
+    // Update velocity.
     this.velocity.set(horizontalVel.x, verticalVel, horizontalVel.z);
     if (this.velocity.y < -this.terminalVelocity) {
       this.velocity.y = -this.terminalVelocity;
     }
-
-    // Update the entity's position.
-    this.position.add(this.velocity.clone().multiplyScalar(deltaTime));
+    
+    // Instead of a simple Euler update, update the position using the average velocity.
+    const avgVelocity = new THREE.Vector3().addVectors(prevVelocity, this.velocity).multiplyScalar(0.5);
+    this.position.add(avgVelocity.multiplyScalar(deltaTime));
 
     // Reset applied forces.
     this.appliedForces.set(0, 0, 0);
@@ -139,59 +110,43 @@ export default class PhysicsEntity extends Entity {
   // Collision and Miscellaneous Functions
   // ─────────────────────────────
 
-  /**
-   * Resolve collisions using the Separating Axis Theorem.
-   * If a collision from below is detected, mark the entity as grounded.
-   */
-  resolveCollision(entity, deltaTime) {
+  resolveCollision(entity) {
     const entityBox = entity.boundingBox;
     const thisBox = this.boundingBox;
     const mtv = this.calculateMTV(thisBox, entityBox);
 
-    const epsilon = 0.00000001;
-    if (mtv.length() < epsilon) return;
+    // Use a small epsilon to ignore very small overlaps.
+    const epsilon = 0.01;
+    if (!mtv || mtv.length() < epsilon) return;
 
-    if (mtv) {
-      const direction = this.position.clone().sub(entity.position).normalize().multiplyScalar(epsilon);
-      const pushVector = mtv.dot(direction) < 0 ? mtv.negate() : mtv;
-      this.position.add(pushVector.multiplyScalar(deltaTime));
+    const direction = this.position.clone().sub(entity.position).normalize();
+    const pushVector = mtv.dot(direction) < 0 ? mtv.negate() : mtv;
+    this.position.add(pushVector);
 
-      const mtvAxis = pushVector.clone().normalize();
-      if (Math.abs(mtvAxis.x) > Math.abs(mtvAxis.y) && Math.abs(mtvAxis.x) > Math.abs(mtvAxis.z)) {
-        this.velocity.x = 0;
-      } else if (Math.abs(mtvAxis.y) > Math.abs(mtvAxis.z)) {
-        // If collision comes from below, mark as grounded.
-        if (thisBox.corners[0].y > entityBox.corners[0].y) {
-          this.velocity.y = 0;
-          this.isGrounded = true;
-          //console.log("The entity is grounded");
-        } else {
-          // to test
-          this.velocity.y *= -1;
-        }
-      } else {
-        this.velocity.z = 0;
+    const mtvAxis = pushVector.clone().normalize();
+    if (Math.abs(mtvAxis.x) > Math.abs(mtvAxis.y) && Math.abs(mtvAxis.x) > Math.abs(mtvAxis.z)) {
+      this.velocity.x = 0;
+    } else if (Math.abs(mtvAxis.y) > Math.abs(mtvAxis.z)) {
+      this.velocity.y = 0;
+      if (thisBox.corners[0].y > entityBox.corners[0].y) {
+        this.isGrounded = true;
       }
+    } else {
+      this.velocity.z = 0;
     }
   }
 
-  /**
-   * Handle collisions with a list of entities.
-   */
-  handleCollisions(entities, deltaTime) {
+  handleCollisions(entities) {
     const collisions = this.boundingBox.handleCollisions(entities);
     if (collisions.length > 0) {
       for (const entity of collisions) {
-        this.resolveCollision(entity, deltaTime);
+        this.resolveCollision(entity);
       }
     } else {
       this.isGrounded = false;
     }
   }
 
-  /**
-   * Compute the Minimum Translation Vector (MTV) using SAT.
-   */
   calculateMTV(boxA, boxB) {
     const axes = boxA.getSeparatingAxes(boxA.corners, boxB.corners);
     let minOverlap = Infinity;
@@ -221,16 +176,29 @@ export default class PhysicsEntity extends Entity {
     return mtv;
   }
 
-  /**
-   * Fixed-step update method.
-   * Call this every frame to accumulate time and perform fixed-step physics updates.
-   */
-  fixedUpdate() {
+  // ─────────────────────────────
+  // Fixed-step update method with interpolation.
+  // ─────────────────────────────
+
+  update() {
+    // Update timer and accumulate delta time.
     this.timer.update();
     this.accumulatedTime += this.timer.getDelta();
+
+    // Process fixed time steps.
     while (this.accumulatedTime >= this.fixedDelta) {
+      this.previousPosition.copy(this.position);
       this.updatePhysics(this.fixedDelta);
+      if (this.boundingBox && typeof this.boundingBox.update === "function") {
+        this.boundingBox.update();
+      }
       this.accumulatedTime -= this.fixedDelta;
     }
+    
+    // Calculate interpolation factor.
+    const alpha = this.accumulatedTime / this.fixedDelta;
+    
+    // Interpolate between the previous physics state and the current state.
+    this.renderPosition.copy(this.previousPosition).lerp(this.position, alpha);
   }
 }
