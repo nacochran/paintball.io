@@ -24,7 +24,7 @@ export default class BoundingBox {
     this.corners = [];
 
     // Factor to enlarge the bounding box (1.0 = exact size, 1.1 = 10% larger, etc.)
-    this.enlargeFactor = 1.0001;
+    this.enlargeFactor = .98;
 
     // Create the wireframe and add it to the scene.
     this.wireframe = this.createWireframeMesh();
