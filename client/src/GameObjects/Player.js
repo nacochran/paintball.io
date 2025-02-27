@@ -9,7 +9,7 @@ export default class Player extends PhysicsEntity {
     super(config);
 
     // Define player size.
-    this.size = { width: 1, height: 1, depth: 1 };
+    this.size = { width: 1, height: 2, depth: 1 };
 
     // Define health
     this.health = 100;
@@ -46,7 +46,6 @@ export default class Player extends PhysicsEntity {
    * Process input to set the wish direction and target speed.
    */
   handleMovement() {
-    // Ensure this.camera exists.
     if (!this.camera) {
       console.error("Camera reference is missing in Player!");
       return;
@@ -68,52 +67,46 @@ export default class Player extends PhysicsEntity {
     if (keys.pressed("S")) move.sub(forward);
     if (keys.pressed("A")) move.sub(right);
     if (keys.pressed("D")) move.add(right);
-
-    // rework so that player releases shift and they walk
-    if (keys.pressed("Shift")) {
-      this.state = "sprinting";
-    }
   
     // Normalize if there is movement.
     if (move.lengthSq() > 0) {
       move.normalize();
     }
-    
-    // Set the player's desired horizontal movement.
     this.wishDir.copy(move);
-    this.targetSpeed = (this.state === "sprinting") ? this.sprintSpeed : this.walkSpeed;
+  
+    // Determine the player's state and target speed.
+    // Check sliding first if that combination is desired.
+    if (keys.pressed("ShiftLeft") && keys.pressed("C") && this.velocity.length() >= 15) {
+      this.state = "sliding";
+      this.targetSpeed = this.slidingSpeed;
+      this.size = { width: 1, height: 1, depth: 1 };
+    } else if (keys.pressed("C")) {
+      this.state = "crouching";
+      this.targetSpeed = this.crouchingSpeed;
+      this.size = { width: 1, height: 1, depth: 1 };
+    } else if (keys.pressed("Shift")) {
+      // Sprint only when the shift key is held.
+      this.state = "sprinting";
+      this.targetSpeed = this.sprintSpeed;
+    } else {
+      // Default to walking if shift isn't held.
+      this.state = "walking";
+      this.targetSpeed = this.walkSpeed;
+      this.size = { width: 1, height: 2, depth: 1 };
+    }
   
     // Handle jumping.
     if (keys.pressed("Space") && this.isGrounded) {
       this.velocity.y = 30;
       this.isGrounded = false;
     }
-
-    // Handle Crouching
-    if (keys.pressed("C")){
-      this.state = "crouching";
-      // Insert Crouch Logic here
-      // Half players height
-      // Reduce their movement speed slightly use croching speed
-    }
-
-    // Handle Sliding
-    if (keys.pressed("ShiftLeft") && keys.pressed("C") && this.velocity >= 15){
-      this.state = "sliding";
-      // Insert slide logic here
-      // Half the players height
-      // Compound their movement speed with sliding speed up to a maximum
-      // or perhaps just set it raw and keep player air born for speed???
-    }
-
-    // Handle Shooting
+  
+    // Handle Shooting.
     if (keys.pressed("MouseButtonOne")){
-      // Insert shooting logic to shoot from a gun
-      // For now I will just console.log text saying shooting
-      // REMIND MYSELF TO FIGURE OUT KEY CODE FOR THE LEFT MOUSE BUTTON!!!!!! LOOK EHREABCSLBACKJABCLAB
       console.log("I am shooting! PEW! PEW! PEW!");
     }
-  } 
+  }
+   
 
   /**
    * Funtion to heal the player based on an input amount.
