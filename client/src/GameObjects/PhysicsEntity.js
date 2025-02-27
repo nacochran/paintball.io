@@ -86,7 +86,7 @@ export default class PhysicsEntity extends Entity {
       }
     } else {
       if (this.wishDir.lengthSq() > 0) {
-        const airAccel = 20;
+        const airAccel = 40;
         horizontalVel = this.accelerate(horizontalVel, this.wishDir, this.targetSpeed, airAccel, deltaTime);
       }
       horizontalVel = this.applyGroundFriction(horizontalVel, 2, deltaTime);
