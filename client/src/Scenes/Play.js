@@ -92,9 +92,10 @@ class Game {
    */
   updateCameraPosition() {
     const player = this.camera.target;
-    // Set the camera at the player's eye level:
-    camera.position.copy(player.position).add(new THREE.Vector3(0, 1.5, 0));
-    // Copy the camera’s yaw (horizontal rotation) to the player so that movement aligns with view.
+    // Use half the standing eye height when crouching:
+    const eyeOffsetY = (player.state === "crouching") ? 0.15 : 0.98;
+    camera.position.copy(player.position).add(new THREE.Vector3(0, eyeOffsetY, 0));
+    // Optionally, sync the player's yaw to the camera’s yaw:
     player.rotation.y = camera.rotation.y;
   }
 
