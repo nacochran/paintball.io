@@ -37,13 +37,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-async function sendVerificationEmail(email, verificationLink) {
+async function sendVerificationEmail(email, verificationCode) {
   try {
     await transporter.sendMail({
       from: `"Paintball.io" <no-reply@paintball.io>`,
       to: email,
       subject: "Verify Your Account",
-      html: `<p>Click <a href="${verificationLink}">here</a> to verify your account.</p>`
+      html: `<p>Here is your verification code: ${verificationCode}</p>`
     }, (error, info) => {
       if (error) {
         console.log(error);
@@ -113,8 +113,6 @@ app.use((req, res, next) => {
   // Pass the JS file to the template
   res.locals.jsFile = jsFile;
 
-  // console.log(jsFile);
-
   next();
 });
 
@@ -133,38 +131,27 @@ await db.test_connection();
 // Routes                                       //
 //////////////////////////////////////////////////
 
-// Welcome Page
+// Renders App
 app.get("/", (req, res) => {
-  res.render("layout", {
-    user: req.user,
-    error: null
-  });
+  res.render("layout", { user: req.user });
 });
 
-// Login Page
-app.get("/login", (req, res) => {
-  res.render("pages/login", {
-    user: req.user,
-    error: null,
-    message: null
-  });
-});
-
-// Private Profile Page
-app.get("/profile", (req, res) => {
-  //console.log(req.session);
-
+// Get personal-user data frmo authenticated user
+app.get("/authenticated-user", (req, res) => {
   if (!req.isAuthenticated()) {
-    return res.redirect("/login");
+    res.json({
+      user: null,
+      error: "User not authenticated"
+    });
+  } else {
+    res.json({
+      user: req.user,
+      error: null
+    });
   }
-  /*<h1>Welcome, <%= user.username %>!</h1>
-  <p>Email: <%= user.email %>
-  </p>
-
-  <a><button onClick="sendPostRequest('logout')">Logout</button></a>*/
 });
 
-// Public Profile Page
+// Get public-user data
 app.get("/user/:username", async (req, res) => {
   const { username } = req.params;
   try {
@@ -175,33 +162,21 @@ app.get("/user/:username", async (req, res) => {
     });
 
     if (rows.length === 0) {
-      return res.status(404).render("public-profile", { error: "User not found" });
+      res.json({
+        error: "User not found"
+      });
+    } else {
+      res.json({
+        user: req.user,
+        error: null
+      });
     }
-
-    res.render("pages/public-profile", {
-      user: req.user,
-      profile: rows[0],
-      error: null
-    });
   } catch (error) {
     console.error("Error fetching user profile:", error.message);
-    res.status(500).render("public-profile", { error: "Internal server error" });
+    res.json({
+      error: 'Internal Server Error'
+    });
   }
-});
-
-// Signup Page
-app.get("/register", (req, res) => {
-  res.render("pages/register", {
-    user: req.user,
-    error: null
-  });
-});
-
-// Signup Success Page
-app.get("/signup-successful", (req, res) => {
-  /* <h1>Sign Up Successful!</h1>
-  <p>Your account has been created successfully. Check your email for a verification email.</p>
-  <a href="/login"><button>Go to Login</button></a>*/
 });
 
 // Handle Signup
@@ -209,28 +184,27 @@ app.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
 
   if (!username || !email || !password) {
-    return res.status(400).render("pages/register", { error: "All fields are required", user: req.user });
+    return res.json({ error: "All fields are required", user: req.user });
   }
 
   try {
     const user = new User({ username: username, email: email, password: password });
 
     if (await user.is_username_unique(db)) {
-      return res.status(400).render("pages/register", { error: "Username already taken", user: req.user });
+      return res.json({ error: "Username already taken", user: req.user });
     } else if (await user.is_email_unique(db)) {
-      return res.status(400).render("pages/register", { error: "Email already taken", user: req.user });
+      return res.json({ error: "Email already taken", user: req.user });
     }
 
-    await user.register(db, config.security.hashRounds, async function (verificationToken) {
-      const verificationLink = `http://localhost:5000/verify?token=${verificationToken}`;
-      await sendVerificationEmail(email, verificationLink);
+    await user.register(db, config.security.hashRounds, async function (verificationCode) {
+      await sendVerificationEmail(email, verificationCode);
 
-      res.redirect("/signup-successful");
+      return res.json({ message: "Signup successful! Please check your email for a verification code.", user: req.user });
     });
 
   } catch (error) {
     console.error("Error signing up user:", error.message);
-    res.status(500).render("pages/register", { error: "Internal server error", user: req.user });
+    res.json({ error: "Internal server error", user: req.user });
   }
 });
 
@@ -240,20 +214,23 @@ app.post("/login", (req, res, next) => {
 
     if (!user) {
       if (err == "not_verified") {
-        return res.status(400).render("pages/login", { error: err, user: req.user, message: null });
-      } else if (err == "invalid_credentials") {
-        return res.status(400).render("pages/login", { error: err, user: req.user, message: null });
+        return res.json({ err_code: err, error: "User not verified. Request new verification email.", user: req.user, message: null });
+      } else if (err == "user_not_found") {
+        return res.json({ error: "No user found with that username.", user: req.user, message: null });
+      } else if (err = "invalid_password") {
+        return res.json({ error: "Incorrect password.", user: req.user, message: null });
       } else {
         // general case
-        return res.status(400).render("pages/login", { error: err, user: req.user, message: null });
+        return res.json({ error: err, user: req.user, message: null });
       }
     }
 
     req.login(user, (err) => {
       if (err) {
-        return res.status(500).render("pages/login", { error: "Error logging in", user: req.user, message: null });
+        return res.json({ error: "Error logging in", user: req.user, message: null });
+      } else {
+        return res.json({ error: null, user: req.user, message: "Successful Login" });
       }
-      res.redirect("/profile");
     });
   })(req, res, next);
 });
@@ -261,7 +238,7 @@ app.post("/login", (req, res, next) => {
 // Handle Logout
 app.post("/logout", (req, res) => {
   req.logout((err) => {
-    if (err) return res.status(500).json({ message: "Logout failed" });
+    if (err) return res.json({ message: "Logout failed" });
 
     req.session.destroy(() => {
       res.redirect("/");
@@ -270,50 +247,26 @@ app.post("/logout", (req, res) => {
 });
 
 // verifies a registered user (unverified_users table --> users table)
-app.get("/verify", async (req, res) => {
-  const { token } = req.query;
+app.post("/verify", async (req, res) => {
+  const code = req.body.verificationCode;
 
-  if (!token) {
-    return res.status(400).send("Invalid verification link.");
+  if (!code) {
+    return res.render({ error: "Invalid verification code." });
   }
 
   try {
-    await db.verify_user({ token: token }, (success) => {
+    await db.verify_user({ code: code }, (success) => {
       if (success) {
-        res.render("pages/login", { user: req.user, error: null, message: "Account verified!" });
+        res.json({ user: req.user, error: null, message: "Account verified! You can now login!" });
       } else {
-        /*<h1>Invalid or expired verification link.</h1>*/
-        return res.render("pages/invalid-verification", { user: req.user });
+        return res.json({ user: req.user, err_code: "invalid_code", error: "Invalid code.", message: null });
       }
     });
 
   } catch (error) {
     console.error("Error verifying user:", error.message);
-    res.status(500).send("Internal server error.");
+    res.json({ error: "Internal server error." });
   }
-});
-
-app.get("/resend-verification", (req, res) => {
-  /* <h1>Resend Verification Email</h1>
-
-    <% if (error) { %>
-      <p style="color: red;">
-        <%= error %>
-      </p>
-      <% } %>
-
-        <% if (message) { %>
-          <p style="color: green;">
-            <%= message %>
-          </p>
-          <% } %>
-
-            <form action="/resend-verification" method="POST">
-              <label for="email">Enter your email:</label>
-              <input type="email" id="email" name="email" required>
-              <br>
-              <button type="submit">Resend Verification Email</button>
-            </form>*/
 });
 
 // resend verification
@@ -322,18 +275,17 @@ app.post("/resend-verification", async (req, res) => {
 
   try {
 
-    await db.resend_verification_email({ email: email }, async (success, verificationToken) => {
+    await db.resend_verification_email({ email: email }, async (success, verificationCode) => {
       if (success) {
-        res.render("pages/resend-verification", {
+        res.json({
           message: "A new verification email has been sent.",
           error: null,
           user: req.user
         });
 
-        const verificationLink = `http://localhost:5000/verify?token=${verificationToken}`;
-        await sendVerificationEmail(email, verificationLink);
+        await sendVerificationEmail(email, verificationCode);
       } else {
-        res.render("pages/resend-verification", {
+        res.json({
           error: "No unverified account found with this email.",
           message: null,
           user: req.user
@@ -342,7 +294,7 @@ app.post("/resend-verification", async (req, res) => {
     });
   } catch (error) {
     console.error("Error resending verification email:", error.message);
-    res.render("pages/resend-verification", {
+    res.json({
       error: "Internal server error.",
       message: null,
       user: req.user
@@ -368,12 +320,12 @@ passport.use(
       const users = await user.match_verified_users(db);
 
       if (users.length === 0) {
-        return cb("invalid_credentials", false);
+        return cb("user_not_found", false);
       }
 
       bcrypt.compare(password, users[0].password, (err, valid) => {
         if (valid) return cb(null, users[0]);
-        return cb(null, false);
+        return cb("invalid_password", false);
       });
     } catch (err) {
       return cb(err);
