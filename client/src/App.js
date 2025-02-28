@@ -5,6 +5,11 @@ import { rectToRect, rectToCircle } from "./utils/collision.js";
 // Import Scenes
 import playScene from "./Scenes/Play.js";
 import menuScene from "./Scenes/Menu.js";
+import loginScene from "./Scenes/Login.js";
+import signupScene from "./Scenes/Signup.js";
+import personalProfileScene from "./Scenes/PersonalProfile.js";
+import publicProfileScene from "./Scenes/PublicProfile.js";
+import settingsScene from "./Scenes/Settings.js";
 
 // Register action labels for key codes
 keys.register("W", "KeyW");
@@ -27,8 +32,13 @@ Button.registerType('circle', rectToCircle);
 
 // Register Scenes
 sceneManager.addScene("menu", menuScene);
+sceneManager.addScene("login", loginScene);
+sceneManager.addScene("signup", signupScene);
+sceneManager.addScene("personal-profile", personalProfileScene);
+sceneManager.addScene("public-profile", publicProfileScene);
+sceneManager.addScene("settings", settingsScene);
 sceneManager.addScene("play", playScene);
-sceneManager.setScene("play");
+sceneManager.setScene("menu");
 
 let lastFrameTime = 0; // Tracks the time of the last frame
 

@@ -75,17 +75,18 @@ export default class Database {
 
     try {
       const hashedPassword = await bcrypt.hash(config.password, config.hashRounds);
-      const verificationToken = crypto.randomBytes(32).toString("hex");
+      //const verificationToken = crypto.randomBytes(32).toString("hex");
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       const expirationTime = new Date(Date.now() + 5 * 60 * 1000);
 
       // Insert the new user into `unverified_users`
       await connection.query(
-        "INSERT INTO unverified_users (username, email, password, verification_token, token_expires_at) VALUES (?, ?, ?, ?, ?)",
-        [config.username, config.email, hashedPassword, verificationToken, expirationTime]
+        "INSERT INTO unverified_users (username, email, password, verification_code, token_expires_at) VALUES (?, ?, ?, ?, ?)",
+        [config.username, config.email, hashedPassword, verificationCode, expirationTime]
       );
 
       await connection.commit(); // Commit transaction if all queries succeed
-      cb(verificationToken);
+      cb(verificationCode);
     } catch (error) {
       await connection.rollback(); // Rollback transaction on error
       console.error("Error registering user:", error);
@@ -98,8 +99,8 @@ export default class Database {
 
   async verify_user(config, cb) {
     const [rows] = await this.db.query(
-      "SELECT * FROM unverified_users WHERE verification_token = ? AND token_expires_at > NOW()",
-      [config.token]
+      "SELECT * FROM unverified_users WHERE verification_code = ? AND token_expires_at > NOW()",
+      [config.code]
     );
 
     let success = false;
@@ -129,18 +130,19 @@ export default class Database {
     if (rows.length > 0) {
 
 
-      const verificationToken = crypto.randomBytes(32).toString("hex");
+      //const verificationToken = crypto.randomBytes(32).toString("hex");
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       const expirationTime = new Date(Date.now() + 5 * 60 * 1000);
 
 
       await this.db.query(
-        "UPDATE unverified_users SET verification_token = ?, token_expires_at = ? WHERE email = ?",
-        [verificationToken, expirationTime, config.email]
+        "UPDATE unverified_users SET verification_code = ?, token_expires_at = ? WHERE email = ?",
+        [verificationCode, expirationTime, config.email]
       );
 
       success = true;
 
-      cb(success, verificationToken);
+      cb(success, verificationCode);
     } else {
       cb(success, null);
     }

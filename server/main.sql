@@ -9,7 +9,7 @@ CREATE TABLE unverified_users (
     username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(200) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
-    verification_token VARCHAR(64) NOT NULL,
+    verification_code CHAR(6) NOT NULL,
     token_expires_at DATETIME NOT NULL,  -- Token expires in 5 minutes
     created_at DATETIME NOT NULL DEFAULT NOW()  -- User expires in 7 days
 );

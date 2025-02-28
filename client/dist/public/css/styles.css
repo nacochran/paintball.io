@@ -1,0 +1,138 @@
+/* Simple style for the main menu */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Style for the 3D canvas */
+#threed-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Style for the 2D UI canvas */
+#ui-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Ensure .html-content is above the 3D canvas */
+.html-content {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.html-content * {
+  pointer-events: all;
+}
+
+/* Style the HTML Form */
+/* Center the form and give it a clean look */
+#login-form-div {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 320px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+#login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+/* Style for labels */
+#login-form label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  align-self: flex-start;
+  margin-bottom: 5px;
+}
+
+/* Input fields */
+#login-form input {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+  transition: border 0.3s;
+}
+
+#login-form input:focus {
+  border-color: #007bff;
+}
+
+/* Login button */
+#login-form button {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  background: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+#login-form button:hover {
+  background: #0056b3;
+}
+
+/* Improve spacing between elements */
+#login-form br {
+  display: none;
+}
+
+/* Responsive design */
+@media (max-width: 400px) {
+  #login-form {
+    width: 90%;
+  }
+}
+
+/* Style for the Resend Verification Button */
+#resend-verification button {
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  background: #28a745;
+  border: none;
+  border-radius: 5px;
+}
+
+#resend-verification button:hover {
+  background: #218838;
+  cursor: pointer;
+}

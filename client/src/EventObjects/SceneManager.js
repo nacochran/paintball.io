@@ -42,7 +42,9 @@ export default class SceneManager {
 
       for (let i = 0; i < this.currentScene.buttons.length; i++) {
         const button = this.currentScene.buttons[i];
-        button.display();
+        if (!button.disable) {
+          button.display();
+        }
       }
     }
   }
@@ -51,7 +53,9 @@ export default class SceneManager {
     if (!this.transitioning && this.currentScene) {
       for (let i = 0; i < this.currentScene.buttons.length; i++) {
         const button = this.currentScene.buttons[i];
-        button.handleClick(mouse);
+        if (!button.disable) {
+          button.handleClick(mouse);
+        }
       }
     }
   }
@@ -109,10 +113,12 @@ export default class SceneManager {
   }
 
 
-  createTransition(targetScene) {
+  createTransition(targetScene, cb = null) {
     sceneManager.transitioning = true;
     SceneManager.closeScene(function () {
+      document.querySelector('.html-content').innerHTML = '';
       sceneManager.setScene(targetScene);
+      if (cb != null) cb();
       SceneManager.openScene(function () {
         sceneManager.transitioning = false;
       });

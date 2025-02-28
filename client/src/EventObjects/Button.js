@@ -6,6 +6,7 @@ export default class Button {
     this.y = config.y;
     this.width = config.width;
     this.height = config.height;
+
     // Extra args
     this.args = config.args || {};
 
