@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    Paintball.io
+  </title>
+  <link rel="stylesheet" href="client/dist/public/css/styles.css">
+</head>
+
+<body>
+  <!-- 3D Canvas for Three.js -->
+  <div id="threed-canvas"></div>
+
+  <!-- HTML Content -->
+  <div class="html-content"></div>
+
+  <!-- 2D Canvas for App UI -->
+  <canvas id="ui-canvas"></canvas>
+
+  <!-- 
+   Utility Functions 
+   -->
+  <script src="client/dist/public/js/library.js"></script>
+
+  <!-- 
+    -- Grab JS file generated from VITE on the front-end 
+    -- Contains app functionality for Three.js 3D canvas (#threed-canvas)
+   -->
+  <script src="client/dist/public/<%= jsFile %>"></script>
+
+
+  <!-- Data -->
+  <!-- <p style="display:none" id="user-data">
+    <%= user ? JSON.stringify(user) : '' %>
+  </p> -->
+
+</body>
+
+</html>
