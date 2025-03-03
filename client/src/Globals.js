@@ -10,4 +10,11 @@ const sceneManager = new SceneManager({});
 
 const UICanvas = document.getElementById('ui-canvas');
 
+<<<<<<< Updated upstream
 export { mouse, keys, sceneManager, timeManager, UICanvas };
+=======
+// 'front-end' or 'back-end'
+const DEV_MODE = "front-end";
+
+export { mouse, keys, sceneManager, timeManager, UICanvas, DEV_MODE };
+>>>>>>> Stashed changes
