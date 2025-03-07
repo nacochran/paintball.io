@@ -19,7 +19,7 @@ import Database from './back_end_logic/infrastructure/database.js';
 import User from './back_end_logic/app_logic/user.js';
 
 //////////////////////////////////////////////////
-// General Config Variables                     //
+// Initalize Express App                        //
 //////////////////////////////////////////////////
 const app = express();
 
@@ -134,6 +134,7 @@ await db.test_connection();
 // Renders App
 app.get("/", (req, res) => {
   res.render("layout", { user: req.user });
+  //res.render("layout", { user: new User({req.user.name }) });
 });
 
 // Get personal-user data frmo authenticated user

@@ -8,9 +8,6 @@
     "concurrently": "^7.6.0"
   },
   "dependencies": {
-    "crypto": "^1.0.1",
-    "mailgen": "^2.0.29",
-    "nodemailer": "^6.10.0",
     "paintball-fps": "file:"
   }
 }
