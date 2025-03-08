@@ -229,8 +229,9 @@ function createMenuButtons(state) {
         UI.textAlign("center", "bottom");
         UI.text('Logout', this.x + this.width / 2, this.y + this.height - 15);
       },
-      onClick: function () {
-        sendPostRequest('logout')
+      onClick: async function () {
+        await sendPostRequest('logout');
+        sceneManager.createTransition('menu');
       }
     }));
   }
@@ -254,19 +255,7 @@ const menuScene = {
     UI.width = window.innerWidth;
     UI.height = window.innerHeight;
 
-    // get user data from the back-end
-    await fetch('/authenticated-user')
-      .then(response => response.json())
-      .then(result => {
-        if (result.error) {
-          user = null;
-        } else {
-          user = result.user;
-        }
-      })
-      .catch(error => console.error("AJAX request failed:", error));
-
-    sceneManager.scenes['menu'].buttons = createMenuButtons((user == null) ? ("guest-view") : ("personal-view"));
+    sceneManager.scenes['menu'].buttons = createMenuButtons((sceneManager.user == null) ? ("guest-view") : ("personal-view"));
   },
   display: function () {
     UI.fill(0, 0, 0);
