@@ -1,7 +1,0 @@
-{
-  "recommendations": [
-    "esbenp.prettier-vscode", // Prettier extension for code formatting
-    "dbaeumer.vscode-eslint", // ESLint for linting
-    "zhuangtongfa.material-theme", // Material Theme for syntax highlighting
-  ]
-}
