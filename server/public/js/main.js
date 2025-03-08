@@ -1,20 +1,24 @@
-/*  */
 
+
+/* 
+ * AJAX Library
+ * Eventually expand this into a class
+ * Add functionality to disable a specific event/button until request returns
+ */
 async function sendPostRequest(endpoint) {
   try {
     const response = await fetch(`http://localhost:5000/${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
-      },
-      credentials: 'include'
+      }
     });
 
-    if (response.redirected) {
-      window.location.href = response.url;
-    } else if (!response.ok) {
-      console.error('Failed to send POST request:', response.statusText);
-    }
+    const result = await response.json();
+
+    console.log(result);
+
+    return result;
   } catch (error) {
     console.error('Error sending POST request:', error);
   }

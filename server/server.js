@@ -85,6 +85,9 @@ app.use('/client/dist', express.static(path.join(__dirname, '..', 'client', 'dis
 
 
 // Enable CORS
+// NOTE: For deployment, possible disable it
+// app.use(cors({ origin: false }));
+// Or optionally reference a different domain if the front-end is hosted elsewhere
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 
 // Enable JSON format for data transfer
@@ -133,8 +136,16 @@ await db.test_connection();
 
 // Renders App
 app.get("/", (req, res) => {
-  res.render("layout", { user: req.user });
-  //res.render("layout", { user: new User({req.user.name }) });
+  let user = null;
+
+  if (req.user) {
+    user = new User({
+      username: req.user.username,
+      email: req.user.email
+    });
+  }
+
+  res.render("layout", { user: user });
 });
 
 // Get personal-user data frmo authenticated user
@@ -145,8 +156,13 @@ app.get("/authenticated-user", (req, res) => {
       error: "User not authenticated"
     });
   } else {
+    const user = new User({
+      username: req.user.username,
+      email: req.user.email
+    });
+
     res.json({
-      user: req.user,
+      user: user,
       error: null
     });
   }
@@ -239,10 +255,10 @@ app.post("/login", (req, res, next) => {
 // Handle Logout
 app.post("/logout", (req, res) => {
   req.logout((err) => {
-    if (err) return res.json({ message: "Logout failed" });
+    if (err) return res.json({ error: "Logout failed" });
 
     req.session.destroy(() => {
-      res.redirect("/");
+      return res.json({ message: "Logout successful." });
     });
   });
 });

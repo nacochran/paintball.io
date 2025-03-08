@@ -7,4 +7,6 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 // run app
-app();
+window.onload = function () {
+  app();
+}
