@@ -3,8 +3,10 @@ import { keys, mouse, timeManager, sceneManager, UICanvas } from "../Globals.js"
 export default class SceneManager {
   constructor(config) {
     this.scenes = {};
+    this.user = null; // passed from back-end
     this.currentScene = null;
     this.transitioning = false;
+    this.loading = false;
     this.targetScene = null;
     this.setup = function () { };
 
@@ -42,9 +44,7 @@ export default class SceneManager {
 
       for (let i = 0; i < this.currentScene.buttons.length; i++) {
         const button = this.currentScene.buttons[i];
-        if (!button.disable) {
-          button.display();
-        }
+        button.display();
       }
     }
   }
@@ -113,9 +113,23 @@ export default class SceneManager {
   }
 
 
-  createTransition(targetScene, cb = null) {
+  async createTransition(targetScene, cb = null) {
+    // get user data from the back-end
+    const user = await fetch('/authenticated-user')
+      .then(response => response.json())
+      .then(result => {
+        if (result.error) {
+          return null;
+        } else {
+          return result.user;
+        }
+      })
+      .catch(error => console.error("AJAX request failed:", error));
+    console.log(user);
+    this.user = user;
+
     sceneManager.transitioning = true;
-    SceneManager.closeScene(function () {
+    SceneManager.closeScene(async function () {
       document.querySelector('.html-content').innerHTML = '';
       sceneManager.setScene(targetScene);
       if (cb != null) cb();
