@@ -13,5 +13,9 @@ export default defineConfig({
   server: {
     // Ensure VITE is running on the desired port during dev
     port: 3000,
+    cors: {
+      origin: "http://localhost:3000",
+      credentials: true
+    }
   }
 });

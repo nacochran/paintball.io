@@ -38,7 +38,7 @@ sceneManager.addScene("personal-profile", personalProfileScene);
 sceneManager.addScene("public-profile", publicProfileScene);
 sceneManager.addScene("settings", settingsScene);
 sceneManager.addScene("play", playScene);
-sceneManager.setScene("menu");
+
 
 let lastFrameTime = 0; // Tracks the time of the last frame
 
@@ -64,11 +64,28 @@ function app(currentTime) {
   requestAnimationFrame(app);
 }
 
-// Start the animation loop
-requestAnimationFrame(app);
+// on app startup
+(async () => {
+  // get user data from the back-end
+  const user = await fetch('/authenticated-user')
+    .then(response => response.json())
+    .then(result => {
+      if (result.error) {
+        return null;
+      } else {
+        return result.user;
+      }
+    })
+    .catch(error => console.error("AJAX request failed:", error));
+  sceneManager.user = user;
 
+  sceneManager.setScene("menu");
 
-keys.handleEvents();
-mouse.handleEvents();
+  // Start the animation loop
+  requestAnimationFrame(app);
+
+  keys.handleEvents();
+  mouse.handleEvents();
+})();
 
 export default app;
