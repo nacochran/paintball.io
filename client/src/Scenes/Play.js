@@ -115,6 +115,9 @@ class Game {
 
     // Render the scene
     renderer.render(scene, camera);
+
+    // temp
+    //console.log("Play Mode: ", sceneManager.user == null ? "Guest" : "Logged In");
   }
 }
 

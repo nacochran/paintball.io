@@ -2,10 +2,7 @@
   "name": "paintball-fps",
   "version": "1.0.0",
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\""
-  },
-  "devDependencies": {
-    "concurrently": "^7.6.0"
+    "start": "node server/server.js"
   },
   "dependencies": {
     "paintball-fps": "file:"
