@@ -71,39 +71,51 @@ const loginScene = {
       // Prevents page reload
       event.preventDefault();
 
+      // Disable the button
+      const loginButton = loginForm.querySelector("button[type='submit']");
+      loginButton.disabled = true;
+      loginButton.innerText = "Logging in..."; // Optional: Change button text
+
       // Gather form data
       const formData = new FormData(this);
 
-      const response = await fetch('/login', {
-        method: 'POST',
-        body: JSON.stringify(Object.fromEntries(formData)),
-        headers: {
-          'Content-Type': 'application/json'
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          body: JSON.stringify(Object.fromEntries(formData)),
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        // Process response
+        const result = await response.json();
+
+        error.style.display = "none";
+        message.style.display = "none";
+
+        if (result.error) {
+          error.innerText = result.error;
+          error.style.display = "block";
+
+          if (result.err_code && result.err_code == "not_verified") {
+            resendVerificationForm.style.display = "block";
+          }
         }
-      });
 
-      // Process response
-      const result = await response.json();
-
-      error.style.display = "none";
-      message.style.display = "none";
-
-      if (result.error) {
-        error.innerText = result.error;
-        error.style.display = "block";
-
-        if (result.err_code && result.err_code == "not_verified") {
-          resendVerificationForm.style.display = "block";
+        // Successful Login
+        if (result.message) {
+          sceneManager.createTransition('menu');
         }
-      }
-
-      // Successful Login
-      if (result.message) {
-        //message.style.display = "block";
-        //message.innerText = result.message;
-        sceneManager.createTransition('menu');
+      } catch (err) {
+        console.error("Login request failed:", err);
+      } finally {
+        // Re-enable the button after request completes
+        loginButton.disabled = false;
+        loginButton.innerText = "Login";
       }
     });
+
 
     verificationForm.addEventListener("submit", async function (event) {
       event.preventDefault();
