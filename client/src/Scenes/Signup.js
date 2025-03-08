@@ -83,32 +83,45 @@ const signupScene = {
       // Prevents page reload
       event.preventDefault();
 
-      // Gather form data
-      const formData = new FormData(this);
+      const signupButton = registerForm.querySelector("#registerForm button[type='submit']");
+      signupButton.disabled = true;
+      signupButton.innerText = "Registering...";
 
-      const response = await fetch('/register', {
-        method: 'POST',
-        body: JSON.stringify(Object.fromEntries(formData)),
-        headers: {
-          'Content-Type': 'application/json'
+      try {
+
+        // Gather form data
+        const formData = new FormData(this);
+
+        const response = await fetch('/register', {
+          method: 'POST',
+          body: JSON.stringify(Object.fromEntries(formData)),
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        // Process response
+        const result = await response.json();
+
+        error.style.display = "none";
+        message.style.display = "none";
+
+        if (result.error) {
+          error.innerText = result.error;
+          error.style.display = "block";
         }
-      });
-
-      // Process response
-      const result = await response.json();
-
-      error.style.display = "none";
-      message.style.display = "none";
-
-      if (result.error) {
-        error.innerText = result.error;
-        error.style.display = "block";
-      }
-      if (result.message) {
-        message.style.display = "block";
-        message.innerText = result.message;
-        registerForm.style.display = "none";
-        verificationForm.style.display = "block";
+        if (result.message) {
+          message.style.display = "block";
+          message.innerText = result.message;
+          registerForm.style.display = "none";
+          verificationForm.style.display = "block";
+        }
+      } catch (err) {
+        console.error("Login request failed:", err);
+      } finally {
+        // Re-enable the button after request completes
+        signupButton.disabled = false;
+        signupButton.innerText = "Sign Up";
       }
     });
 
