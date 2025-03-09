@@ -230,8 +230,12 @@ function createMenuButtons(state) {
         UI.text('Logout', this.x + this.width / 2, this.y + this.height - 15);
       },
       onClick: async function () {
-        await sendPostRequest('logout');
-        sceneManager.createTransition('menu');
+        const response = await sendPostRequest('logout');
+        if (response) {
+          sceneManager.createTransition('menu');
+        } else {
+          alert("Error Logging Out.");
+        }
       }
     }));
   }
