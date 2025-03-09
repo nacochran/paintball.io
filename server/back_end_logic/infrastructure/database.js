@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 
 export default class Database {
   constructor(config) {
+    console.log("TESTING DATABASE!!!");
     console.log(config.db.host);
     console.log(config.db.user);
     console.log(config.db.password);
