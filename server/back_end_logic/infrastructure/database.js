@@ -12,10 +12,7 @@ export default class Database {
         user: config.db.user,
         password: config.db.password,
         database: config.db.database,
-        port: config.db.port,
-        ssl: {
-          rejectUnauthorized: false
-        }
+        port: config.db.port
       });
     } else {
       this.db = new Pool({
@@ -23,7 +20,10 @@ export default class Database {
         user: config.db.user,
         password: config.db.password,
         database: config.db.database,
-        port: config.db.port
+        port: config.db.port,
+        ssl: {
+          rejectUnauthorized: false
+        }
       });
     }
   }
