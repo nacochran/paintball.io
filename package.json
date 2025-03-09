@@ -21,11 +21,11 @@
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "fs": "^0.0.1-security",
-    "mysql2": "^3.12.0",
     "nodemailer": "^6.10.0",
     "paintball-fps-server": "file:",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
+    "pg": "^8.13.3",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
