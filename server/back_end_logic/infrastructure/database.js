@@ -11,7 +11,9 @@ export default class Database {
       password: config.db.password,
       database: config.db.database,
       port: config.db.port,
-      ssl: true
+      ssl: {
+        rejectUnauthorized: false
+      }
     });
   }
 
