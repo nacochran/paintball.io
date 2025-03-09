@@ -5,6 +5,11 @@ import bcrypt from "bcryptjs";
 
 export default class Database {
   constructor(config) {
+    console.log(config.db.host);
+    console.log(config.db.user);
+    console.log(config.db.password);
+    console.log(config.db.database);
+
     this.db = new Pool({
       host: config.db.host,
       user: config.db.user,
