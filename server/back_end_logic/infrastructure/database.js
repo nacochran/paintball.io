@@ -1,24 +1,24 @@
-import mysql from "mysql2/promise";
-import crypto from "crypto"; // senerating token for email verification link
+import pkg from 'pg';
+const { Pool } = pkg;
+import crypto from "crypto"; // For generating tokens
 import bcrypt from "bcryptjs";
-
-// TODO: Update to use transactions/commits
 
 export default class Database {
   constructor(config) {
-    this.db = mysql.createPool({
+    this.db = new Pool({
       host: config.db.host,
       user: config.db.user,
       password: config.db.password,
-      database: config.db.database
+      database: config.db.database,
+      port: config.db.port,
     });
   }
 
   async test_connection() {
     try {
-      const connection = await this.db.getConnection();
-      console.log("Connected to the MySQL database!");
-      connection.release();
+      const client = await this.db.connect();
+      console.log("Connected to the PostgreSQL database!");
+      client.release();
     } catch (error) {
       console.error("Error connecting to the database:", error.message);
     }
@@ -31,10 +31,9 @@ export default class Database {
     }
 
     const infoFields = config.fields.join(',');
-    const query = `SELECT ${infoFields} FROM users WHERE ${config.queryType} = ?`;
+    const query = `SELECT ${infoFields} FROM users WHERE ${config.queryType} = $1`;
 
-
-    const [rows] = await this.db.query(query, [config.filter]);
+    const { rows } = await this.db.query(query, [config.filter]);
 
     return rows;
   }
@@ -45,12 +44,10 @@ export default class Database {
       return null;
     }
 
-
     const infoFields = config.fields.join(',');
+    const query = `SELECT ${infoFields} FROM unverified_users WHERE ${config.queryType} = $1`;
 
-    const query = `SELECT ${infoFields} FROM unverified_users WHERE ${config.queryType} = ?`;
-
-    const [rows] = await this.db.query(query, [config.filter]);
+    const { rows } = await this.db.query(query, [config.filter]);
 
     return rows;
   }
@@ -70,50 +67,45 @@ export default class Database {
   }
 
   async register_user(config, cb) {
-    const connection = await this.db.getConnection(); // Get a single connection
-    await connection.beginTransaction(); // Start transaction
-
+    const client = await this.db.connect(); // Get a single client
     try {
+      await client.query('BEGIN'); // Start transaction
+
       const hashedPassword = await bcrypt.hash(config.password, config.hashRounds);
-      //const verificationToken = crypto.randomBytes(32).toString("hex");
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       const expirationTime = new Date(Date.now() + 5 * 60 * 1000);
 
       // Insert the new user into `unverified_users`
-      await connection.query(
-        "INSERT INTO unverified_users (username, email, password, verification_code, token_expires_at) VALUES (?, ?, ?, ?, ?)",
+      await client.query(
+        "INSERT INTO unverified_users (username, email, password, verification_code, token_expires_at) VALUES ($1, $2, $3, $4, $5)",
         [config.username, config.email, hashedPassword, verificationCode, expirationTime]
       );
 
-      await connection.commit(); // Commit transaction if all queries succeed
+      await client.query('COMMIT'); // Commit transaction if all queries succeed
       cb(verificationCode);
     } catch (error) {
-      await connection.rollback(); // Rollback transaction on error
+      await client.query('ROLLBACK'); // Rollback transaction on error
       console.error("Error registering user:", error);
       cb(null);
     } finally {
-      connection.release(); // Release connection back to pool
+      client.release(); // Release connection back to pool
     }
   }
 
-
   async verify_user(config, cb) {
-    const [rows] = await this.db.query(
-      "SELECT * FROM unverified_users WHERE verification_code = ? AND token_expires_at > NOW()",
-      [config.code]
-    );
+    const query = "SELECT * FROM unverified_users WHERE verification_code = $1 AND token_expires_at > NOW()";
+    const { rows } = await this.db.query(query, [config.code]);
 
     let success = false;
 
     if (rows.length > 0) {
       const user = rows[0];
-      await this.db.query("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", [
-        user.username,
-        user.email,
-        user.password
-      ]);
+      await this.db.query(
+        "INSERT INTO users (username, email, password) VALUES ($1, $2, $3)",
+        [user.username, user.email, user.password]
+      );
 
-      await this.db.query("DELETE FROM unverified_users WHERE id = ?", [user.id]);
+      await this.db.query("DELETE FROM unverified_users WHERE id = $1", [user.id]);
 
       success = true;
     }
@@ -122,44 +114,36 @@ export default class Database {
   }
 
   async resend_verification_email(config, cb) {
-    const [rows] = await this.db.query("SELECT * FROM unverified_users WHERE email = ?", [config.email]);
-
+    const query = "SELECT * FROM unverified_users WHERE email = $1";
+    const { rows } = await this.db.query(query, [config.email]);
 
     let success = false;
 
     if (rows.length > 0) {
-
-
-      //const verificationToken = crypto.randomBytes(32).toString("hex");
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       const expirationTime = new Date(Date.now() + 5 * 60 * 1000);
 
-
       await this.db.query(
-        "UPDATE unverified_users SET verification_code = ?, token_expires_at = ? WHERE email = ?",
+        "UPDATE unverified_users SET verification_code = $1, token_expires_at = $2 WHERE email = $3",
         [verificationCode, expirationTime, config.email]
       );
 
       success = true;
-
       cb(success, verificationCode);
     } else {
       cb(success, null);
     }
-
-
   }
 
   refresh_unverified_users() {
     setInterval(async () => {
       try {
-        const [result] = await this.db.query(
-          "DELETE FROM unverified_users WHERE created_at < NOW() - INTERVAL 7 DAY"
-        );
-        console.log(`Deleted ${result.affectedRows} expired unverified users.`);
+        const query = "DELETE FROM unverified_users WHERE created_at < NOW() - INTERVAL '7 days'";
+        const { rowCount } = await this.db.query(query);
+        console.log(`Deleted ${rowCount} expired unverified users.`);
       } catch (error) {
         console.error("Error cleaning up unverified users:", error.message);
       }
-    }, 24 * 60 * 60 * 1000);
+    }, 24 * 60 * 60 * 1000); // Cleanup every 24 hours
   }
 }
