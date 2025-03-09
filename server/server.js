@@ -254,7 +254,6 @@ app.post("/login", (req, res, next) => {
 
 // Handle Logout
 app.post("/logout", (req, res) => {
-  console.log("TESTING LOGOUT!!!");
   req.logout((err) => {
     if (err) return res.json({ error: "Logout failed" });
 
