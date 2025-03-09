@@ -7,7 +7,7 @@
  */
 async function sendPostRequest(endpoint) {
   try {
-    const response = await fetch(`http://localhost:5000/${endpoint}`, {
+    const response = await fetch(`/${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
