@@ -5,16 +5,27 @@ import bcrypt from "bcryptjs";
 
 export default class Database {
   constructor(config) {
-    this.db = new Pool({
-      host: config.db.host,
-      user: config.db.user,
-      password: config.db.password,
-      database: config.db.database,
-      port: config.db.port,
-      ssl: {
-        rejectUnauthorized: false
-      }
-    });
+    // Local Connection vs Remote Connection
+    if (config.db.host == 'localhost') {
+      this.db = new Pool({
+        host: config.db.host,
+        user: config.db.user,
+        password: config.db.password,
+        database: config.db.database,
+        port: config.db.port,
+        ssl: {
+          rejectUnauthorized: false
+        }
+      });
+    } else {
+      this.db = new Pool({
+        host: config.db.host,
+        user: config.db.user,
+        password: config.db.password,
+        database: config.db.database,
+        port: config.db.port
+      });
+    }
   }
 
   async test_connection() {
