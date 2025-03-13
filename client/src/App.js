@@ -10,6 +10,7 @@ import signupScene from "./Scenes/Signup.js";
 import personalProfileScene from "./Scenes/PersonalProfile.js";
 import publicProfileScene from "./Scenes/PublicProfile.js";
 import settingsScene from "./Scenes/Settings.js";
+import arenasScene from "./Scenes/Arenas.js";
 
 // Register action labels for key codes
 keys.register("W", "KeyW");
@@ -38,6 +39,7 @@ sceneManager.addScene("personal-profile", personalProfileScene);
 sceneManager.addScene("public-profile", publicProfileScene);
 sceneManager.addScene("settings", settingsScene);
 sceneManager.addScene("play", playScene);
+sceneManager.addScene("arenas", arenasScene);
 
 
 let lastFrameTime = 0; // Tracks the time of the last frame

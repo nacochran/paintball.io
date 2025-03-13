@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import Button from "../EventObjects/Button.js";
-import { mouse, keys, sceneManager, UICanvas, DEV_MODE } from "../Globals.js";
+import { mouse, keys, sceneManager, UICanvas, DEV_MODE, socketManager } from "../Globals.js";
 import Player from "../GameObjects/Player.js";
 import Block from "../GameObjects/Block.js";
 import { Shape, ShapeBuilder } from "../utils/ShapeHelper.js";
@@ -16,6 +16,8 @@ class Game {
     this.entities = [];
     this.clock = new THREE.Clock();
     this.pointerLockControls = null;
+    this.socketID = null;
+    this.player = null;
   }
 
   setup() {
@@ -40,9 +42,9 @@ class Game {
     );
 
     // Then create the player and pass in the camera
-    const player = new Player({ x: 0, y: -30, z: 0 }, scene, camera);
-    this.entities.push(player);
-    this.camera = { target: player };
+    this.player = new Player({ x: 0, y: -30, z: 0 }, scene, camera);
+    this.entities.push(this.player);
+    this.camera = { target: this.player };
 
     // Instantiate PointerLockControls (remove FirstPersonControls entirely)
     this.pointerLockControls = new PointerLockControls(camera, renderer.domElement);
@@ -54,7 +56,7 @@ class Game {
     });
 
     // Position the camera initially at the player's eye level.
-    camera.position.copy(player.position).add(new THREE.Vector3(0, 1.5, 0));
+    camera.position.copy(this.player.position).add(new THREE.Vector3(0, 1.5, 0));
 
     // Imports Custom Shape (your existing GLTF loading code)
     const url = (DEV_MODE == 'front-end') ? "./assets/gltf/TestLevelOne.glb" : "client/dist/public/assets/gltf/TestLevelOne.glb";
@@ -161,6 +163,8 @@ const playScene = {
 
     // Setup Game
     game.setup();
+
+    console.log("Finished setup");
   },
   display: function () {
     game.play();
@@ -194,6 +198,7 @@ const playScene = {
       },
       onClick: function () {
         sceneManager.createTransition('menu');
+        socket.disconnect();
       }
     })
   ]

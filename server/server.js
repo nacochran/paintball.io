@@ -2,6 +2,8 @@
 // LIBRARIES & DEPENDENCIES                     //
 //////////////////////////////////////////////////
 import express from "express";
+import { Server } from "socket.io";
+import http from "http";
 import bodyParser from "body-parser";
 import cors from "cors";
 import config from "./config.js";
@@ -16,12 +18,25 @@ import fs from 'fs';
 
 // Database
 import Database from './back_end_logic/infrastructure/database.js';
+// User class to act as interface between front-end and back-end data in database
 import User from './back_end_logic/app_logic/user.js';
+// Arena: handles back-end game logic
+import Arena from './back_end_logic/game_logic/arena.js';
 
 //////////////////////////////////////////////////
 // Initalize Express App                        //
 //////////////////////////////////////////////////
 const app = express();
+const server = http.createServer(app);
+
+// Initalize Socket.io on the server
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"]
+  }
+});
+
 
 //////////////////////////////////////////////////
 // Setup Email Management System                //
@@ -320,6 +335,110 @@ app.post("/resend-verification", async (req, res) => {
 });
 
 
+//////////////////////////////////////////////////
+// Handle Back-end physics                      //
+//////////////////////////////////////////////////
+
+// arenas in load queue
+const arenas_in_queue = {};
+const active_arenas = {};
+// maps socketID --> arenaID in either 
+// arenas_in_queue or active_arenas
+const connections = {};
+
+// mostly for testing
+// in case server restarts
+(async () => {
+
+  // reload arenas in queue if
+  const db_arenas = await db.get_arenas_in_load_queue();
+  for (let arena of db_arenas) {
+    arenas_in_queue[arena.unique_id] = new Arena({
+      id: arena.unique_id,
+      name: arena.name
+    });
+  }
+})();
+
+// get arenas in load queue
+app.get('/arenas', async (req, res) => {
+  try {
+    const arenas = await db.get_arenas_in_load_queue();
+    res.json({ arenas });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch arenas' });
+  }
+});
+
+// create a new arena (add to load queue)
+app.post('/create-arena', async (req, res) => {
+  const { name } = req.body;
+
+  if (!name || name.trim() === '') {
+    return res.status(400).json({ error: 'Arena name is required' });
+  }
+
+  try {
+    const arena = await db.create_arena(name);
+
+    arenas_in_queue[arena.unique_id] = new Arena({
+      id: arena.unique_id,
+      name: arena.name
+    });
+    res.status(201).json({ message: 'Arena created successfully', arena });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create arena' });
+  }
+});
+
+// Run Socket.io connection listener
+io.on('connection', (socket) => {
+  console.log(`User connected: ${socket.id}`);
+
+  socket.on('join-arena', (data) => {
+    console.log(`Player connected: ${socket.id}`)
+
+    if (arenas_in_queue[data.arena]) {
+      arenas_in_queue[data.arena].players[socket.id] = { state: "new player!" };
+      connections[socket.id] = data.arena;
+    } else {
+      // TODO: Check if the user is already in active game and 
+      // temporarily got disconnected
+      console.log("Arena is full already, or does not exist.");
+    }
+  });
+
+  socket.on('start-arena', async (data) => {
+    console.log(`Started arena: ${data.arena}`)
+    arenas_in_queue[data.arena].state = "active";
+    active_arenas[data.arena] = arenas_in_queue[data.arena];
+    delete arenas_in_queue[data.arena];
+    await db.set_status(data.arena, 'active');
+  });
+
+
+  // NOTE: 
+  // maybe provide a way for plays to reconnect if they
+  // temporarily lost internet connection
+  socket.on('disconnect', () => {
+    console.log(`Player disconnected: ${socket.id}`);
+    if (arenas_in_queue[connections[socket.id]]) {
+      delete arenas_in_queue[connections[socket.id]].players[socket.id];
+    } else if (active_arenas[connections[socket.id]]) {
+      delete active_arenas[connections[socket.id]].players[socket.id];
+    }
+    delete connections[socket.id];
+  });
+});
+
+// sync arenas with their respective local browser connections
+for (const arenaID in active_arenas) {
+  const arena = active_arenas[arenaID];
+  arena.sync(io);
+}
+
+
+
 // Set up Passport authentication
 passport.use(
   "local",
@@ -359,22 +478,22 @@ db.refresh_unverified_users();
 //////////////////////////////////////////////////
 // Run Server                                   //
 //////////////////////////////////////////////////
-const server = app.listen(config.app.port, () => {
+server.listen(config.app.port, () => {
   console.log(`Server running on port ${config.app.port}`);
 });
 
-// process.on("SIGTERM", () => {
-//   console.log("Closing server...");
-//   server.close(() => {
-//     console.log("Server closed.");
-//     process.exit(0);
-//   });
-// });
+process.on("SIGTERM", () => {
+  console.log("Closing server...");
+  server.close(() => {
+    console.log("Server closed.");
+    process.exit(0);
+  });
+});
 
-// process.on("SIGINT", () => {
-//   console.log("Closing server...");
-//   server.close(() => {
-//     console.log("Server closed.");
-//     process.exit(0);
-//   });
-// });
+process.on("SIGINT", () => {
+  console.log("Closing server...");
+  server.close(() => {
+    console.log("Server closed.");
+    process.exit(0);
+  });
+});
