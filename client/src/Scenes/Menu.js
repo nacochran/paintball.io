@@ -41,7 +41,7 @@ function createMenuButtons(state) {
         UI.text('Play', this.x + this.width / 2, this.y + this.height - 15);
       },
       onClick: function () {
-        sceneManager.createTransition('play');
+        sceneManager.createTransition('arenas');
       }
     }));
 
@@ -136,7 +136,7 @@ function createMenuButtons(state) {
         UI.text('Play', this.x + this.width / 2, this.y + this.height - 15);
       },
       onClick: function () {
-        sceneManager.createTransition('play');
+        sceneManager.createTransition('arenas');
       }
     }));
 

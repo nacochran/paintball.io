@@ -1,6 +1,5 @@
 import pkg from 'pg';
 const { Pool } = pkg;
-import crypto from "crypto"; // For generating tokens
 import bcrypt from "bcryptjs";
 
 export default class Database {
@@ -148,6 +147,83 @@ export default class Database {
       cb(success, null);
     }
   }
+
+  // Get all arenas that are in load queue
+  async get_arenas_in_load_queue() {
+    try {
+      const query = "SELECT * FROM arenas WHERE state = 'in_load_queue' ORDER BY created_at DESC";
+      const { rows } = await this.db.query(query);
+      return rows;
+    } catch (error) {
+      console.error("Error fetching arenas in queue:", error.message);
+      throw error;
+    }
+  }
+
+
+  // get all active arenas
+  async get_active_arenas() {
+    try {
+      const query = "SELECT * FROM arenas WHERE state = 'active' ORDER BY created_at DESC";
+      const { rows } = await this.db.query(query);
+      return rows;
+    } catch (error) {
+      console.error("Error fetching arenas in queue:", error.message);
+      throw error;
+    }
+  }
+
+
+  // Create a new arena
+  async create_arena(name) {
+    try {
+      // Helper function to generate a random string of length 10
+      function generateRandom9DigitNumber() {
+        return (Math.floor(100000000 + Math.random() * 900000000)).toString(); // Converts the 9-digit number to a string
+      }
+
+      // Generate a random unique_id
+      let uniqueId = generateRandom9DigitNumber();
+
+      // Check if the unique_id already exists in the database
+      let existingArena = await this.db.query("SELECT id FROM arenas WHERE unique_id = $1", [uniqueId]);
+
+      // If the unique_id already exists, regenerate it
+      while (existingArena.rows.length > 0) {
+        uniqueId = generateUniqueId();
+        existingArena = await this.db.query("SELECT id FROM arenas WHERE unique_id = $1", [uniqueId]);
+      }
+
+      // Insert the new arena with the unique_id
+      const query = "INSERT INTO arenas (name, unique_id, state) VALUES ($1, $2, 'in_load_queue') RETURNING id, name, unique_id, created_at";
+      const { rows } = await this.db.query(query, [name.trim(), uniqueId]);
+
+      return rows[0];
+    } catch (error) {
+      console.error("Error creating arena:", error.message);
+      throw error;
+    }
+  }
+
+  // Set or update the status (state) of a specific arena
+  async set_status(arenaID, status) {
+    try {
+      const query = "UPDATE arenas SET state = $1 WHERE unique_id = $2";
+      const { rowCount } = await this.db.query(query, [status, arenaID]);
+
+      if (rowCount === 0) {
+        console.warn(`Arena with ID ${arenaID} not found.`);
+        return false; // No arena was updated
+      }
+
+      console.log(`Arena ${arenaID} status updated to '${status}'.`);
+      return true; // Successfully updated
+    } catch (error) {
+      console.error("Error updating arena status:", error.message);
+      throw error;
+    }
+  }
+
 
   refresh_unverified_users() {
     setInterval(async () => {

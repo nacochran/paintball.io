@@ -63,29 +63,29 @@ export default class Player extends PhysicsEntity {
       console.error("Camera reference is missing in Player!");
       return;
     }
-  
+
     // Get the camera’s forward direction.
     const forward = new THREE.Vector3();
     this.camera.getWorldDirection(forward);
     forward.y = 0;
     forward.normalize();
-  
+
     // Get the camera’s right vector.
     const right = new THREE.Vector3();
     right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
-  
+
     // Build the movement vector.
     const move = new THREE.Vector3();
     if (keys.pressed("W")) move.add(forward);
     if (keys.pressed("S")) move.sub(forward);
     if (keys.pressed("A")) move.sub(right);
     if (keys.pressed("D")) move.add(right);
-  
+
     if (move.lengthSq() > 0) {
       move.normalize();
     }
     this.wishDir.copy(move);
-  
+
     // Determine the player's state and target speed.
     // If both sprint (Shift) and crouch (C) are pressed, enter sliding mode.
     if (keys.pressed("Shift") && keys.pressed("C")) {
@@ -111,7 +111,7 @@ export default class Player extends PhysicsEntity {
       this.size = { width: 1, height: 2, depth: 1 };
       this.slideStartTime = null;
     }
-  
+
     // Jump if possible.
     if (keys.pressed("Space") && this.isGrounded) {
       // If sliding and jump occurs quickly after sliding starts, perform a long jump.
@@ -130,13 +130,23 @@ export default class Player extends PhysicsEntity {
         this.isGrounded = false;
       }
     }
-  
+
     // Handle shooting.
     if (keys.pressed("LeftMouseButton")) {
       console.log("I am shooting! PEW! PEW! PEW!");
     }
   }
-  
+
+  /**
+   * Get state of player to pass to back-end
+   * for back-end physics-based processing
+   **/
+  getState() {
+    return {
+      inputVector: this.wishDir
+    };
+  }
+
   /**
    * Main update loop for the player.
    * Processes input, updates physics, handles collisions,
@@ -146,43 +156,43 @@ export default class Player extends PhysicsEntity {
     // Update timer and accumulate fixed time steps.
     this.timer.update();
     this.accumulatedTime += this.timer.getDelta();
-  
+
     while (this.accumulatedTime >= this.fixedDelta) {
       // Save state for interpolation.
       this.previousPosition.copy(this.position);
-  
+
       // Process input.
       this.handleMovement();
-  
+
       // Fixed-step physics update.
-      this.updatePhysics(this.fixedDelta);
-  
+      //this.updatePhysics(this.fixedDelta);
+
       // Handle collisions.
-      this.handleCollisions(entities);
-  
+      //this.handleCollisions(entities);
+
       // Update bounding box.
       if (this.boundingBox && typeof this.boundingBox.update === "function") {
         this.boundingBox.update();
       }
-  
+
       this.accumulatedTime -= this.fixedDelta;
     }
-  
+
     // Update the shape's transform based on the attached entity.
     this.shape.update();
-  
+
     // ---- Infinite Turning with the Camera using Quaternion ----
     if (this.camera) {
       // Extract the current camera yaw (using 'YXZ').
       const cameraEuler = new THREE.Euler().setFromQuaternion(this.camera.quaternion, 'YXZ');
       const currentCameraYaw = cameraEuler.y;
-  
+
       // Initialize lastCameraYaw if needed.
       if (this.lastCameraYaw === undefined) {
         this.lastCameraYaw = currentCameraYaw;
         this.totalYaw = currentCameraYaw;
       }
-  
+
       // Compute change in yaw.
       let deltaYaw = currentCameraYaw - this.lastCameraYaw;
       // Adjust for wrap-around.
@@ -193,13 +203,13 @@ export default class Player extends PhysicsEntity {
       }
       this.totalYaw += deltaYaw;
       this.lastCameraYaw = currentCameraYaw;
-  
+
       // Update the quaternion from the total yaw.
       this.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.totalYaw);
-  
+
       // Update the Euler rotation from the quaternion.
       this.rotation.setFromQuaternion(this.quaternion);
-  
+
       // Update bounding box rotation if needed.
       if (this.boundingBox) {
         if (this.boundingBox.rotation) {
