@@ -3,6 +3,8 @@ import Button from "../EventObjects/Button.js";
 import { mouse, keys, sceneManager, UICanvas, DEV_MODE } from "../Globals.js";
 import Player from "../GameObjects/Player.js";
 import Block from "../GameObjects/Block.js";
+import SpawnPoint from "../GameObjects/SpawnPoint.js"
+import Gun from "../GameObjects/Gun.js"
 import { Shape, ShapeBuilder } from "../utils/ShapeHelper.js";
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import UI from "../utils/UI.js";
@@ -43,6 +45,10 @@ class Game {
     const player = new Player({ x: 0, y: -30, z: 0 }, scene, camera);
     this.entities.push(player);
     this.camera = { target: player };
+
+    //Gun Spawn
+    const GunSpawn = new SpawnPoint({ x: 10, y: -49, z: 0, item: new Gun}, scene);
+    this.entities.push(GunSpawn);
 
     // Instantiate PointerLockControls (remove FirstPersonControls entirely)
     this.pointerLockControls = new PointerLockControls(camera, renderer.domElement);

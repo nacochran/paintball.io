@@ -3,6 +3,7 @@ import { keys } from "../Globals.js";
 import { Shape } from "../utils/ShapeHelper.js";
 import * as THREE from 'three';
 import BoundingBox from "../utils/BoundingBox.js";
+import Gun from "./Gun.js";
 
 export default class Player extends PhysicsEntity {
   constructor(config, scene, camera) {
@@ -52,6 +53,8 @@ export default class Player extends PhysicsEntity {
 
     // For long jump: record the time when sliding starts.
     this.slideStartTime = null;
+
+    this.weapon = new Gun;
   }
 
   /**

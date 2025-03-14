@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import SpawnPoint from "../GameObjects/SpawnPoint.js"
 
 export default class BoundingBox {
   /**
@@ -188,7 +189,14 @@ export default class BoundingBox {
     for (const entity of entities) {
       if (entity !== this.entity && entity.isCollidable && entity.boundingBox) {
         if (this.isColliding(entity.boundingBox)) {
+          if (entity instanceof SpawnPoint)
+          {
+              entity.handleCollisions(this.entity);
+          }
+          else
+          {
           collisions.push(entity);
+          }
         }
       }
     }
