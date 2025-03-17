@@ -3,6 +3,8 @@ import { keys } from "../Globals.js";
 import { Shape } from "../utils/ShapeHelper.js";
 import * as THREE from 'three';
 import BoundingBox from "../utils/BoundingBox.js";
+import Pistol from "./Guns/Pistol.js";
+import RPG from "./Guns/Rpg.js";
 
 export default class Player extends PhysicsEntity {
   constructor(config, scene, camera) {
@@ -52,6 +54,9 @@ export default class Player extends PhysicsEntity {
 
     // For long jump: record the time when sliding starts.
     this.slideStartTime = null;
+
+    this.sceneRef = scene;
+    this.wepon = new Pistol;
   }
 
   /**
@@ -130,10 +135,11 @@ export default class Player extends PhysicsEntity {
         this.isGrounded = false;
       }
     }
-  
+    
     // Handle shooting.
-    if (keys.pressed("LeftMouseButton")) {
-      console.log("I am shooting! PEW! PEW! PEW!");
+    // Eric : I noticed lmb does not work. so i rebinded to N to test
+    if (keys.pressed("N")) {
+      this.wepon.fire(this.position, forward, Date.now()/1000, this.sceneRef);
     }
   }
   
