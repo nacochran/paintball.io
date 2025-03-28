@@ -32,10 +32,12 @@ const server = http.createServer(app);
 // Initalize Socket.io on the server
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"]
+    origin: ["http://localhost:3000", "https://ancient-beach-65819-22e4a65f5327.herokuapp.com"],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
+
 
 //////////////////////////////////////////////////
 // Setup Email Management System                //
@@ -102,7 +104,12 @@ app.use('/client/dist', express.static(path.join(__dirname, '..', 'client', 'dis
 // NOTE: For deployment, possible disable it
 // app.use(cors({ origin: false }));
 // Or optionally reference a different domain if the front-end is hosted elsewhere
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors({
+  origin: ["http://localhost:3000", "https://ancient-beach-65819-22e4a65f5327.herokuapp.com"],
+  methods: ["GET", "POST"],
+  credentials: true
+}));
+
 
 // Enable JSON format for data transfer
 app.use(express.json());
