@@ -420,12 +420,31 @@ io.on('connection', (socket) => {
   });
 
   socket.on('start-arena', async (data) => {
-    console.log(`Started arena: ${data.arena}`)
+    console.log(`Started arena: ${data.arena}`);
+
+    if (!arenas_in_queue[data.arena]) {
+      console.log(`Arena ${data.arena} does not exist in queue.`);
+      return;
+    }
+
     active_arenas[data.arena] = arenas_in_queue[data.arena];
     delete arenas_in_queue[data.arena];
     active_arenas[data.arena].start(io);
     await db.set_status(data.arena, 'active');
+
+    // (1) Print all connected socket IDs and the number of players
+    const playersInArena = Object.keys(active_arenas[data.arena].players);
+    console.log(`Players in Arena ${data.arena}:`, playersInArena);
+    console.log(`Total players in Arena ${data.arena}: ${playersInArena.length}`);
+
+    // (2) Emit "start-arena" to all players in the arena except the one who started it
+    playersInArena.forEach(playerId => {
+      if (playerId !== socket.id) {
+        io.to(playerId).emit('start-arena', { arena: data.arena });
+      }
+    });
   });
+
 
   // send connection ID back to user
   socket.on('request-initial-game-state', () => {

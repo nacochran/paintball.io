@@ -78,7 +78,9 @@ const arenaScene = {
           const arenaId = this.getAttribute('data-id');
           console.log('Joining arena:', arenaId);
 
-          socketManager.establish_connection(arenaId);
+          socketManager.establish_connection(arenaId, () => {
+            sceneManager.createTransition('play');
+          });
         });
       });
 
