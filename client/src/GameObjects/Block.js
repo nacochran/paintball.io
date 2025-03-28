@@ -18,10 +18,17 @@ export default class Block extends StaticEntity {
     this.shape.mesh.receiveShadow = true;
 
     this.shape.attach(this);
+
+    this.targetPos = this.position;
   }
 
   update() {
     // update shape's position, size, and orientation
     this.shape.update();
+
+    // for consistency, we need targetpos for static
+    // elements as well
+    // but in practice this assignment will be redundant
+    this.position = this.targetPos;
   }
 }

@@ -402,14 +402,17 @@ io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
   socket.on('join-arena', (data) => {
-    console.log(`Player connected: ${socket.id}`);
-
     if (arenas_in_queue[data.arena]) {
-      arenas_in_queue[data.arena].players[socket.id] = {
-        inputs: {},
-        camera: { quaternion: null }
-      };
-      connections[socket.id] = data.arena;
+      if (arenas_in_queue[data.arena].players[socket.id]) {
+        console.log(`Player already in arena: ${socket.id}`);
+      } else {
+        console.log(`Player connected: ${socket.id}`);
+        arenas_in_queue[data.arena].players[socket.id] = {
+          inputs: {},
+          camera: { quaternion: null }
+        };
+        connections[socket.id] = data.arena;
+      }
     } else {
       // TODO: Check if the user is already in active game and 
       // temporarily got disconnected
