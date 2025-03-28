@@ -7,11 +7,11 @@ export default class PhysicsEntity extends Entity {
     super(config);
 
     // State vectors.
-    this.position = this.position || new THREE.Vector3();
+    this.position = this.position || new THREE.Vector3(); // remove because entity has this?
     this.velocity = new THREE.Vector3(0, 0, 0);
     this.acceleration = new THREE.Vector3(0, 0, 0);
     this.appliedForces = new THREE.Vector3(0, 0, 0);
-    
+
     // For interpolation:
     this.previousPosition = this.position.clone();
     this.renderPosition = this.position.clone();
@@ -22,7 +22,7 @@ export default class PhysicsEntity extends Entity {
 
     // Grounding flag.
     this.isGrounded = false;
-    
+
     // Timer & fixed time step integration.
     this.timer = new Timer();
     this.timer.setTimescale(1);
@@ -97,7 +97,7 @@ export default class PhysicsEntity extends Entity {
     if (this.velocity.y < -this.terminalVelocity) {
       this.velocity.y = -this.terminalVelocity;
     }
-    
+
     // Instead of a simple Euler update, update the position using the average velocity.
     const avgVelocity = new THREE.Vector3().addVectors(prevVelocity, this.velocity).multiplyScalar(0.5);
     this.position.add(avgVelocity.multiplyScalar(deltaTime));
@@ -194,10 +194,10 @@ export default class PhysicsEntity extends Entity {
       }
       this.accumulatedTime -= this.fixedDelta;
     }
-    
+
     // Calculate interpolation factor.
     const alpha = this.accumulatedTime / this.fixedDelta;
-    
+
     // Interpolate between the previous physics state and the current state.
     this.renderPosition.copy(this.previousPosition).lerp(this.position, alpha);
   }

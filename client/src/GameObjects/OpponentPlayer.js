@@ -1,8 +1,7 @@
-import StaticEntity from "./StaticEntity.js";
+import PhysicsEntity from "./PhysicsEntity.js";
 import { Shape } from "../utils/ShapeHelper.js";
-import BoundingBox from "../utils/BoundingBox.js";
 
-export default class Block extends StaticEntity {
+export default class OpponentPlayer extends PhysicsEntity {
   constructor(config) {
     super(config);
 
@@ -21,6 +20,7 @@ export default class Block extends StaticEntity {
   }
 
   update() {
+    console.log("Testing: the opponent's update is being called.");
     // update shape's position, size, and orientation
     this.shape.update();
   }
