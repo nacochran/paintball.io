@@ -23,7 +23,7 @@ export default class SocketManager {
   }
 
   // establish WebSocket connection to a particular arena
-  establish_connection(arena_id) {
+  establish_connection(arena_id, onStart) {
     this.arena = arena_id;
 
     // Deployed version: https://ancient-beach-65819-22e4a65f5327.herokuapp.com/
@@ -38,6 +38,11 @@ export default class SocketManager {
         arena: this.arena,
         id: this.socket.id
       });
+    });
+
+    this.socket.once('start-arena', () => {
+      console.log("Arena started by another player...");
+      onStart();
     });
 
     this.socket.on('disconnect', (reason) => {
