@@ -41,7 +41,6 @@ export default class SocketManager {
     });
 
     this.socket.once('start-arena', () => {
-      console.log("Arena started by another player...");
       onStart();
     });
 

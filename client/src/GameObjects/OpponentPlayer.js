@@ -17,11 +17,17 @@ export default class OpponentPlayer extends PhysicsEntity {
     this.shape.mesh.receiveShadow = true;
 
     this.shape.attach(this);
+
+    this.targetPos = this.position;
   }
 
   update() {
     console.log("Testing: the opponent's update is being called.");
     // update shape's position, size, and orientation
     this.shape.update();
+
+    // TODO: use interpolation
+    // for now just set entiti pos to target pos
+    this.position = this.targetPos;
   }
 }

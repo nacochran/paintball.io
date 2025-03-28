@@ -79,6 +79,8 @@ const arenaScene = {
           console.log('Joining arena:', arenaId);
 
           socketManager.establish_connection(arenaId, () => {
+            console.log("Arena started by another player...");
+            clearInterval(arenaInterval);
             sceneManager.createTransition('play');
           });
         });
