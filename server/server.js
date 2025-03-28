@@ -37,7 +37,6 @@ const io = new Server(server, {
   }
 });
 
-
 //////////////////////////////////////////////////
 // Setup Email Management System                //
 //////////////////////////////////////////////////
@@ -396,25 +395,51 @@ io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
   socket.on('join-arena', (data) => {
-    console.log(`Player connected: ${socket.id}`)
+    console.log(`Player connected: ${socket.id}`);
 
     if (arenas_in_queue[data.arena]) {
-      arenas_in_queue[data.arena].players[socket.id] = { state: "new player!" };
+      arenas_in_queue[data.arena].players[socket.id] = {
+        inputs: {},
+        camera: { quaternion: null }
+      };
       connections[socket.id] = data.arena;
     } else {
       // TODO: Check if the user is already in active game and 
       // temporarily got disconnected
       console.log("Arena is full already, or does not exist.");
     }
+
+    // TODO: should the arena be restarted if the server accidentally restarts?
   });
 
   socket.on('start-arena', async (data) => {
     console.log(`Started arena: ${data.arena}`)
-    arenas_in_queue[data.arena].state = "active";
     active_arenas[data.arena] = arenas_in_queue[data.arena];
     delete arenas_in_queue[data.arena];
+    active_arenas[data.arena].start(io);
     await db.set_status(data.arena, 'active');
   });
+
+  // send connection ID back to user
+  socket.on('request-initial-game-state', () => {
+    if (active_arenas[connections[socket.id]]) {
+      const arena = active_arenas[connections[socket.id]];
+      console.log("Sending intial game state to front-end...");
+      arena.send_initial_game_state(io);
+    }
+  });
+
+  socket.on('player-inputs', (data) => {
+    if (active_arenas[connections[socket.id]]) {
+      const arena = active_arenas[connections[socket.id]];
+      if (arena.players[socket.id]) {
+        // e.g., { inputs: ['move-left', ...], timestamp: Date.now() }
+        arena.players[socket.id].inputs = data.inputs;
+        arena.players[socket.id].camera = data.camera;
+      }
+    }
+  });
+
 
 
   // NOTE: 
@@ -431,11 +456,11 @@ io.on('connection', (socket) => {
   });
 });
 
-// sync arenas with their respective local browser connections
-for (const arenaID in active_arenas) {
-  const arena = active_arenas[arenaID];
-  arena.sync(io);
-}
+// // run arenas
+// for (const arenaID in active_arenas) {
+//   const arena = active_arenas[arenaID];
+//   arena.start(io);
+// }
 
 
 

@@ -4,7 +4,7 @@ export default class Entity {
   constructor(config) {
     this.shapeType = config.shapeType || 'cube';
     this.size = config.size || this.getDefaultSize(this.shapeType);
-    this.position = new THREE.Vector3(config.x, config.y, config.z);
+    this.position = config.position || new THREE.Vector3(config.x, config.y, config.z);
     this.rotation = new THREE.Vector3(0, 0, 0);
 
     // coefficient of friction
@@ -17,6 +17,9 @@ export default class Entity {
     // AND a bounding box
     this.shape = null;
     this.boundingBox = null;
+
+    // used for unique reference
+    this.id = config.id || null;
   }
 
   /**

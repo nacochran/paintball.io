@@ -6,16 +6,31 @@ export default class SocketManager {
     this.arena = null;
   }
 
+  get_socket_id() {
+    return this.socket ? this.socket.id : null;
+  }
+
+  request_initial_game_state() {
+    this.socket.emit('request-initial-game-state');
+  }
+
+  get_initial_game_state() {
+    return new Promise((resolve) => {
+      this.socket.once('initial-game-state', (game_state) => {
+        resolve(game_state);
+      });
+    });
+  }
+
   // establish WebSocket connection to a particular arena
   establish_connection(arena_id) {
     this.arena = arena_id;
 
     // Change to: https://ancient-beach-65819-22e4a65f5327.herokuapp.com/
-    let socket = io("http://localhost:5000");
-    this.socket = socket;
+    this.socket = io("http://localhost:5000");
 
-    this.socket.on('connect', () => {
-      console.log('Connected to server via WebSocket. My ID:', socket.id);
+    this.socket.once('connect', () => {
+      //console.log('Connected to server via WebSocket. My ID:', this.socket.id);
 
       // Join arena after connecting
       this.socket.emit('join-arena', {
@@ -23,6 +38,11 @@ export default class SocketManager {
         id: this.socket.id
       });
     });
+
+    this.socket.on('disconnect', (reason) => {
+      console.warn("⚠️ Socket disconnected unexpectedly:", reason);
+    });
+
   }
 
   // start arena
@@ -30,6 +50,20 @@ export default class SocketManager {
     this.socket.emit('start-arena', {
       arena: arena_id
     });
+  }
+
+  send_inputs(inputs, camera) {
+    this.socket.emit('player-inputs', { inputs: inputs, camera: camera, timestamp: Date.now() });
+  }
+
+  receive_game_state(updateGameEntities) {
+    this.socket.on('game-state', (data) => {
+      updateGameEntities(data);
+    });
+  }
+
+  disconnect() {
+    this.socket.disconnect();
   }
 
 }

@@ -86,9 +86,9 @@ const arenaScene = {
         button.addEventListener('click', function () {
           const arenaId = this.getAttribute('data-id');
           console.log("Starting Arena: ", arenaId);
-          socketManager.start_arena(arenaId);
           clearInterval(arenaInterval);
           sceneManager.createTransition('play');
+          socketManager.start_arena(arenaId);
         });
       });
 

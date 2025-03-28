@@ -125,7 +125,6 @@ export default class SceneManager {
         }
       })
       .catch(error => console.error("AJAX request failed:", error));
-    console.log(user);
     this.user = user;
 
     sceneManager.transitioning = true;
