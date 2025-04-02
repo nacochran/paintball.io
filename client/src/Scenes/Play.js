@@ -96,6 +96,7 @@ class Game {
           position: new THREE.Vector3(pos.x, pos.y, pos.z),
           id: player.id
         });
+        console.log("Opponent Player: ", id, new_player);
         this.entities.push(new_player);
         this.entity_dict[player.id] = new_player;
       }
@@ -116,6 +117,10 @@ class Game {
       this.entities.push(new_block);
       this.entity_dict[block.id] = new_block;
     });
+
+    console.log("Testing entities: ");
+    console.log(`Player: ${this.player.id}`, this.player);
+    console.log(`Entities: `, this.entities);
 
     // setup camera
     // position it at the player's eye level initially

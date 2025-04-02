@@ -17,6 +17,23 @@ const map = {
   ]
 };
 
+const maps = [
+  {
+    platforms: [
+      { type: "something", position: { /*x, y, z*/ }, size: { /*x, y, z*/ }, isCollidabe: true }
+    ],
+    graphical_somethings: [
+
+    ],
+    player_spawn_points: [
+      { /*x, y, z*/ }
+    ],
+    equipment_spawn_points: [
+      { /*type: "[gun] / [armor] / [etc]", x, y, z*/ }
+    ]
+  }
+];
+
 // template for getting player state
 // later on we will replace this with a more sophisticated
 // way so that we will create player states from "player spawn points"
