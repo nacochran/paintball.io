@@ -214,8 +214,11 @@ export default class Arena {
   }
 
   create_game_loop(io) {
+    let ranOnce = false;
     const tickRate = 60;
     setInterval(() => {
+      if (ranOnce) { return; }
+      ranOnce = true;
 
       // Process each player's inputs
       Object.keys(this.players).forEach(playerID => {
