@@ -83,7 +83,7 @@ class Game {
     game_state.players.forEach(player => {
       const pos = player.state.position;
 
-      if (player.id = socketManager.get_socket_id()) {
+      if (player.id === socketManager.get_socket_id()) {
         const new_player = new Player({
           position: new THREE.Vector3(pos.x, pos.y, pos.z),
           camera: camera,
