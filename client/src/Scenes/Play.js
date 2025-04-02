@@ -81,7 +81,8 @@ class Game {
     // create players
     console.log("Number of players: ", game_state.players);
     game_state.players.forEach(player => {
-      const pos = player.state.position;
+      const pos = player.state.position,
+        s = player.state.size;
 
       if (player.id === socketManager.get_socket_id()) {
         const new_player = new Player({
@@ -95,7 +96,8 @@ class Game {
       } else {
         const new_player = new OpponentPlayer({
           position: new THREE.Vector3(pos.x, pos.y, pos.z),
-          id: player.id
+          id: player.id,
+          size: { width: s.width * 2, height: s.height * 2, depth: s.depth * 2 }
         });
         this.entities.push(new_player);
         this.entity_dict[player.id] = new_player;
@@ -104,11 +106,12 @@ class Game {
 
     // create blocks
     game_state.blocks.forEach(block => {
-      const pos = block.state.position;
+      const pos = block.state.position,
+        s = block.state.size;
 
       const new_block = new Block({
         position: new THREE.Vector3(pos.x, pos.y, pos.z),
-        size: block.state.size,
+        size: { width: s.width * 2, height: s.height * 2, depth: s.depth * 2 },
         shapeType: 'cube',
         isCollidable: true,
         id: block.id

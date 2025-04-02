@@ -57,6 +57,14 @@ class PhysicsWorld {
 
   // 
   add_body(type, config) {
+    // console.log("Testing add_body", config);
+    // // divide size units by 2 in order to make them consistent with ThreeJS units
+    // config.size.width /= 2;
+    // config.size.height *= 2;
+    // config.size.depth /= 2;
+
+    // console.log("Testing adjusted add_body", config);
+
     const new_body = this.body_types[type](config);
     this.world.addBody(new_body);
     return new_body;

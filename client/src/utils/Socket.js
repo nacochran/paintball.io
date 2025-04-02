@@ -29,7 +29,8 @@ export default class SocketManager {
 
     // Deployed version: https://ancient-beach-65819-22e4a65f5327.herokuapp.com/
     // Local Version: http://localhost:5000
-    this.socket = io("https://ancient-beach-65819-22e4a65f5327.herokuapp.com/");
+    // this.socket = io("https://ancient-beach-65819-22e4a65f5327.herokuapp.com/");
+    this.socket = io("http://localhost:5000");
 
     this.socket.once('connect', () => {
       //console.log('Connected to server via WebSocket. My ID:', this.socket.id);
