@@ -217,21 +217,22 @@ export default class Arena {
     const tickRate = 60;
     setInterval(() => {
 
-      console.log("Testing arena players: ", this.players);
-
       // Process each player's inputs
       Object.keys(this.players).forEach(playerID => {
         const player = this.players[playerID];
         this.update_player_body(playerID, player);
-        console.log(playerID);
       });
 
       // Step the physics world
       this.world.update();
 
+      console.log("Testing Sockets...");
+
       // send game state back to player
       for (const socketId in this.players) {
         const playerSocket = io.sockets.sockets.get(socketId);
+        console.log("Socket: ", socketId, playerSocket);
+        console.log("Game State: ", this.game_state);
         if (playerSocket) {
           playerSocket.emit('game-state', this.game_state);
         }
