@@ -214,11 +214,8 @@ export default class Arena {
   }
 
   create_game_loop(io) {
-    let ranOnce = false;
     const tickRate = 60;
     setInterval(() => {
-      if (ranOnce) { return; }
-      ranOnce = true;
 
       // Process each player's inputs
       Object.keys(this.players).forEach(playerID => {
@@ -229,13 +226,9 @@ export default class Arena {
       // Step the physics world
       this.world.update();
 
-      console.log("Testing Sockets...");
-
       // send game state back to player
       for (const socketId in this.players) {
         const playerSocket = io.sockets.sockets.get(socketId);
-        console.log("Socket: ", socketId, playerSocket);
-        console.log("Game State: ", this.game_state);
         if (playerSocket) {
           playerSocket.emit('game-state', this.game_state);
         }
@@ -264,15 +257,20 @@ export default class Arena {
   }
 
   send_initial_game_state(io) {
+    console.log("Testing initial game state: ");
+    console.log("Players before: ", this.players);
+
     // tell each player/connection that the game has started
     const playerStates = Object.entries(this.players).map(([id, player]) => ({
-      id,
+      id: id,
       state: player.state
     }));
     const blockStates = Object.entries(this.blocks).map(([id, block]) => ({
-      id,
+      id: id,
       state: block.state
     }));
+
+    console.log("Testing after: ", playerStates);
 
     for (const socketId in this.players) {
       const playerSocket = io.sockets.sockets.get(socketId);
