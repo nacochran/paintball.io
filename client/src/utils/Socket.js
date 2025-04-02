@@ -17,6 +17,7 @@ export default class SocketManager {
   get_initial_game_state() {
     return new Promise((resolve) => {
       this.socket.once('initial-game-state', (game_state) => {
+        console.log("Got game state: ", game_state);
         resolve(game_state);
       });
     });
