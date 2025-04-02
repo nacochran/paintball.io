@@ -257,9 +257,6 @@ export default class Arena {
   }
 
   send_initial_game_state(io) {
-    console.log("Testing initial game state: ");
-    console.log("Players before: ", this.players);
-
     // tell each player/connection that the game has started
     const playerStates = Object.entries(this.players).map(([id, player]) => ({
       id: id,
@@ -269,8 +266,6 @@ export default class Arena {
       id: id,
       state: block.state
     }));
-
-    console.log("Testing after: ", playerStates);
 
     for (const socketId in this.players) {
       const playerSocket = io.sockets.sockets.get(socketId);
