@@ -217,10 +217,13 @@ export default class Arena {
     const tickRate = 60;
     setInterval(() => {
 
+      console.log("Testing arena players: ", this.players);
+
       // Process each player's inputs
       Object.keys(this.players).forEach(playerID => {
         const player = this.players[playerID];
         this.update_player_body(playerID, player);
+        console.log(playerID);
       });
 
       // Step the physics world
