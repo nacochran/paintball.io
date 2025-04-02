@@ -40,9 +40,9 @@ const maps = [
 // this will require that each map has a certain # of spawn points
 // such that the # of players cannot exceed that #
 const availableSpawnPoints = [
-  { x: -25, y: -30, z: 0 },
-  { x: 0, y: -30, z: 0 },
-  { x: 25, y: -30, z: 0 },
+  { x: -5, y: -6, z: 0 },
+  { x: 0, y: -6, z: 0 },
+  { x: 5, y: -6, z: 0 },
 ];
 function getPlayerSpawnPoint() {
   if (availableSpawnPoints.length < 1) return null;
@@ -101,7 +101,7 @@ export default class Arena {
     Object.keys(this.players).forEach(playerId => {
       this.players[playerId].state = {
         position: getPlayerSpawnPoint(),
-        size: { width: 5, height: 5, depth: 5 }
+        size: { width: 3, height: 3, depth: 3 }
       };
     });
 
@@ -110,20 +110,20 @@ export default class Arena {
     // for now we create a temporary stage for blocks
     this.blocks[++this.blockID] = {
       state: {
-        position: { x: -50, y: -50, z: 0 },
-        size: { width: 200, height: 5, depth: 100 }
+        position: { x: -10, y: -10, z: 0 },
+        size: { width: 40, height: 1, depth: 20 }
       },
     };
     this.blocks[++this.blockID] = {
       state: {
-        position: { x: -25, y: -45, z: 0 },
-        size: { width: 5, height: 5, depth: 5 }
+        position: { x: -5, y: -9, z: 0 },
+        size: { width: 2, height: 2, depth: 2 }
       },
     };
     this.blocks[++this.blockID] = {
       state: {
-        position: { x: 25, y: -45, z: 0 },
-        size: { width: 5, height: 5, depth: 5 }
+        position: { x: 5, y: -9, z: 0 },
+        size: { width: 2, height: 2, depth: 2 }
       },
     };
   }
@@ -266,6 +266,13 @@ export default class Arena {
       id: id,
       state: block.state
     }));
+
+    console.log("Block states: ");
+    Object.values(this.blocks).forEach((block) => {
+      console.log("Position: ", block.state.position);
+      console.log("Size: ", block.state.size);
+    });
+    console.log(blockStates);
 
     for (const socketId in this.players) {
       const playerSocket = io.sockets.sockets.get(socketId);

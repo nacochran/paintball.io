@@ -22,7 +22,7 @@ physics_world.add_contact_material('player', 'platform', { friction: 0.1, restit
 physics_world.register_body('player', (config) => {
   const body = new CANNON.Body({
     mass: 5,
-    shape: new CANNON.Box(config.size || new CANNON.Vec3(1, 1, 1)),
+    shape: new CANNON.Box(config.size || new CANNON.Vec3(2, 2, 2)),
     position: config.position || new CANNON.Vec3(0, 0, 0)
   });
   body.angularDamping = 1;
@@ -35,7 +35,7 @@ physics_world.register_body('player', (config) => {
 physics_world.register_body('dynamic-box-1', (config) => {
   const body = new CANNON.Body({
     mass: 5,
-    shape: new CANNON.Box(config.size || new CANNON.Vec3(1, 1, 1)),
+    shape: new CANNON.Box(config.size || new CANNON.Vec3(2, 2, 2)),
     position: config.position || new CANNON.Vec3(0, 0, 0)
   });
   body.material = physics_world.materials['box'];
@@ -46,7 +46,7 @@ physics_world.register_body('dynamic-box-1', (config) => {
 physics_world.register_body('static-box-1', (config) => {
   const body = new CANNON.Body({
     mass: 0,
-    shape: new CANNON.Box(config.size || new CANNON.Vec3(1, 1, 1)),
+    shape: new CANNON.Box(config.size || new CANNON.Vec3(2, 2, 2)),
     position: config.position || new CANNON.Vec3(0, 0, 0)
   });
   body.material = physics_world.materials['platform'];
@@ -69,7 +69,7 @@ physics_world.register_body('platform-1', (config) => {
 physics_world.register_body('sphere-1', (config) => {
   const body = new CANNON.Body({
     mass: 5,
-    shape: new CANNON.Sphere(config.radius || 1),
+    shape: new CANNON.Sphere(config.radius || 2),
     position: config.position || new CANNON.Vec3(0, 0, 0)
   });
   body.material = physics_world.materials['box'];
