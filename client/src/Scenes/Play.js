@@ -79,6 +79,7 @@ class Game {
     const game_state = await socketManager.get_initial_game_state();
 
     // create players
+    console.log("Number of players: ", game_state.players);
     game_state.players.forEach(player => {
       const pos = player.state.position;
 
@@ -117,10 +118,6 @@ class Game {
       this.entities.push(new_block);
       this.entity_dict[block.id] = new_block;
     });
-
-    console.log("Testing entities: ");
-    console.log(`Player: ${this.player.id}`, this.player);
-    console.log(`Entities: `, this.entities);
 
     // setup camera
     // position it at the player's eye level initially
