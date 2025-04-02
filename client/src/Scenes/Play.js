@@ -97,7 +97,6 @@ class Game {
           position: new THREE.Vector3(pos.x, pos.y, pos.z),
           id: player.id
         });
-        console.log("Opponent Player: ", id, new_player);
         this.entities.push(new_player);
         this.entity_dict[player.id] = new_player;
       }
