@@ -371,6 +371,7 @@ const connections = {};
 app.get('/arenas', async (req, res) => {
   try {
     const arenas = await db.get_arenas_in_load_queue();
+    console.log(arenas);
     res.json({ arenas });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch arenas' });
@@ -379,7 +380,9 @@ app.get('/arenas', async (req, res) => {
 
 // create a new arena (add to load queue)
 app.post('/create-arena', async (req, res) => {
-  const { name } = req.body;
+  const { name, connection_id } = req.body;
+
+  console.log(connection_id);
 
   if (!name || name.trim() === '') {
     return res.status(400).json({ error: 'Arena name is required' });
@@ -389,6 +392,7 @@ app.post('/create-arena', async (req, res) => {
     const arena = await db.create_arena(name);
 
     arenas_in_queue[arena.unique_id] = new Arena({
+      arena_creator: connection_id,
       id: arena.unique_id,
       name: arena.name
     });

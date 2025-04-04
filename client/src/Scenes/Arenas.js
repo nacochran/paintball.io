@@ -116,12 +116,13 @@ const arenaScene = {
 
       const arenaName = document.getElementById('arena-name').value;
       try {
+        console.log("Socket Id: ", socketManager.get_socket_id());
         const response = await fetch('/create-arena', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ name: arenaName })
+          body: JSON.stringify({ name: arenaName, connection_id: socketManager.get_socket_id() })
         });
 
         const result = await response.json();

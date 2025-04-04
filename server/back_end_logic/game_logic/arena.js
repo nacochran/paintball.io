@@ -57,6 +57,8 @@ export default class Arena {
   constructor(config) {
     // unique ID (auto generated)
     this.id = config.id;
+    // creator of the arena
+    this.arena_creator = config.arena_creator;
     // arena name (created by user)
     this.name = config.name;
 
