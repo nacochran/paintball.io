@@ -9,7 +9,7 @@ export default class OpponentPlayer extends PhysicsEntity {
       type: 'cube',
       size: this.size,
       position: this.position,
-      color: 0xaaaaaa
+      color: 0x228B22
     });
 
     // additional configurations
@@ -22,7 +22,6 @@ export default class OpponentPlayer extends PhysicsEntity {
   }
 
   update() {
-    console.log("Testing: the opponent's update is being called.");
     // update shape's position, size, and orientation
     this.shape.update();
 

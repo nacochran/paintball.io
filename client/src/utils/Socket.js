@@ -24,13 +24,15 @@ export default class SocketManager {
   }
 
   // establish WebSocket connection to a particular arena
-  establish_connection(arena_id, onStart) {
+  establish_connection(arena_id, user, onStart) {
     this.arena = arena_id;
 
     // Deployed version: https://ancient-beach-65819-22e4a65f5327.herokuapp.com/
     // Local Version: http://localhost:5000
-    // this.socket = io("https://ancient-beach-65819-22e4a65f5327.herokuapp.com/");
-    this.socket = io("http://localhost:5000");
+    this.socket = io("https://ancient-beach-65819-22e4a65f5327.herokuapp.com/");
+    // this.socket = io("http://localhost:5000");
+
+    console.log(user);
 
     this.socket.once('connect', () => {
       //console.log('Connected to server via WebSocket. My ID:', this.socket.id);
@@ -38,6 +40,7 @@ export default class SocketManager {
       // Join arena after connecting
       this.socket.emit('join-arena', {
         arena: this.arena,
+        user: user,
         id: this.socket.id
       });
     });

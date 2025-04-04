@@ -6,10 +6,6 @@ export default class Block extends StaticEntity {
   constructor(config) {
     super(config);
 
-    console.log("Properties of the block: ");
-    console.log("Size: ", this.size);
-    console.log("Position: ", this.position);
-
     this.shape = config.shape || new Shape({
       type: 'cube',
       size: this.size,

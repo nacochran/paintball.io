@@ -16,8 +16,16 @@ const UI = {
     this.fillStyle = `rgb(${r}, ${g}, ${b})`;
   },
 
+  noFill() {
+    this.fillStyle = 'rgb(0, 0, 0, 0)';
+  },
+
   stroke(r, g, b) {
     this.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+  },
+
+  noStroke() {
+    this.strokeStyle = 'rgb(0, 0, 0, 0)';
   },
 
   strokeWeight(weight) {
@@ -85,13 +93,9 @@ const UI = {
     this.ctx.font = `${this.fontSize}px ${this.fontStyle}`;
     this.ctx.textAlign = this.textAlignH;
     this.ctx.textBaseline = this.textAlignV;
-
-    // Measure text width and height
-    //const textWidth = this.ctx.measureText(message).width;
-    const textHeight = this.fontSize; // Approximate height
-
     this.ctx.fillText(message, x, y);
   }
 };
 
 export default UI;
+
