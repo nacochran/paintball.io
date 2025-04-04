@@ -105,7 +105,8 @@ app.use('/client/dist', express.static(path.join(__dirname, '..', 'client', 'dis
 // app.use(cors({ origin: false }));
 // Or optionally reference a different domain if the front-end is hosted elsewhere
 app.use(cors({
-  origin: ["http://localhost:3000", "https://ancient-beach-65819-22e4a65f5327.herokuapp.com"],
+  origin: ["https://ancient-beach-65819-22e4a65f5327.herokuapp.com"],
+  // origin: [ "http://localhost:3000"], 
   methods: ["GET", "POST"],
   credentials: true
 }));
