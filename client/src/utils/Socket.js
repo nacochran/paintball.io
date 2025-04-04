@@ -5,12 +5,14 @@ export default class SocketManager {
     this.socket = null;
     this.arena = null;
 
-    // Deployed version: https://ancient-beach-65819-22e4a65f5327.herokuapp.com/
-    // Local Version: http://localhost:5000
-    this.socket = io("https://ancient-beach-65819-22e4a65f5327.herokuapp.com/");
-    // this.socket = io("http://localhost:5000");
+    (async () => {
+      // Deployed version: https://ancient-beach-65819-22e4a65f5327.herokuapp.com/
+      // Local Version: http://localhost:5000
+      this.socket = await io("https://ancient-beach-65819-22e4a65f5327.herokuapp.com/");
+      // this.socket = io("http://localhost:5000");
 
-    console.log("Socket ID: ", this.socket.id);
+      console.log("Socket ID: ", this.socket.id);
+    })();
   }
 
   get_socket_id() {
