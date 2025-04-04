@@ -397,6 +397,10 @@ app.post('/create-arena', async (req, res) => {
   }
 });
 
+function generateGuestName(existingUsernames) {
+  return "Guest" + existingUsernames.length;
+}
+
 // Run Socket.io connection listener
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
@@ -407,9 +411,12 @@ io.on('connection', (socket) => {
         console.log(`Player already in arena: ${socket.id}`);
       } else {
         console.log(`Player connected: ${socket.id}`);
+        const username = (data.user) ? (data.user.username) : (generateGuestName(arenas_in_queue[data.arena].usernames));
+        arenas_in_queue[data.arena].usernames.push(username);
         arenas_in_queue[data.arena].players[socket.id] = {
           inputs: {},
-          camera: { quaternion: null }
+          camera: { quaternion: null },
+          username: username
         };
         connections[socket.id] = data.arena;
       }

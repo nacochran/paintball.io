@@ -11,11 +11,6 @@ class Shape {
     this.size = config.size;
     this.position = config.position || new THREE.Vector3(0, 0, 0);
 
-    // 
-    console.log("Testing the configuration of the shape: ");
-    console.log("Shape position: ", this.position);
-    console.log("Shape size: ", this.size);
-
     // Generate the corresponding mesh using ShapeBuilder's static methods
     this.mesh = ShapeBuilder.shapes[this.type](config);
     this.mesh.position.set(this.position.x, this.position.y, this.position.z);

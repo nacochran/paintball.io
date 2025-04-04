@@ -17,10 +17,13 @@ export default class Player extends PhysicsEntity {
 
     // player stats
     this.health = 100;
+    this.XP = 0;
 
     // input management
     this.inputs = {};
     this.t = 0;
+
+    this.name = config.name;
   }
 
   /**

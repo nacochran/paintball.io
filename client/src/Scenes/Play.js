@@ -79,7 +79,6 @@ class Game {
     const game_state = await socketManager.get_initial_game_state();
 
     // create players
-    console.log("Number of players: ", game_state.players);
     game_state.players.forEach(player => {
       const pos = player.state.position,
         s = player.state.size;
@@ -88,7 +87,8 @@ class Game {
         const new_player = new Player({
           position: new THREE.Vector3(pos.x, pos.y, pos.z),
           camera: camera,
-          id: player.id
+          id: player.id,
+          name: player.name
         });
         this.entities.push(new_player);
         this.entity_dict[player.id] = new_player;
@@ -97,7 +97,8 @@ class Game {
         const new_player = new OpponentPlayer({
           position: new THREE.Vector3(pos.x, pos.y, pos.z),
           id: player.id,
-          size: { width: s.width * 2, height: s.height * 2, depth: s.depth * 2 }
+          size: { width: s.width * 2, height: s.height * 2, depth: s.depth * 2 },
+          name: player.name
         });
         this.entities.push(new_player);
         this.entity_dict[player.id] = new_player;
@@ -173,8 +174,6 @@ class Game {
   }
 
   play() {
-    const deltaTime = this.clock.getDelta();
-
     // Update entities (your physics, collision, etc.)
     this.entities.forEach(entity => {
       entity.update(this.entities);
@@ -189,10 +188,6 @@ class Game {
 
     // sync browser to server
     socketManager.receive_game_state(this.updateGameEntities.bind(this));
-
-
-    // temp
-    //console.log("Play Mode: ", sceneManager.user == null ? "Guest" : "Logged In");
   }
 }
 
@@ -222,17 +217,9 @@ const playScene = {
       game.pointerLockControls.lock();
     });
 
-    // document.addEventListener('pointerlockchange', () => {
-    //   if (document.pointerLockElement === renderer.domElement) {
-    //     console.log("Pointer locked!");
-    //   } else {
-    //     console.log("Pointer unlocked!");
-    //   }
-    // });
-
     document.addEventListener('pointerlockerror', () => {
       console.error("Error while attempting to lock pointer");
-    }); ``
+    });
 
     // Setup Game
     game.setup();
@@ -240,13 +227,38 @@ const playScene = {
   display: function () {
     if (game.finished_loading) {
       game.play();
-    } else {
-      console.log("Game is loading...");
+
+      UI.fill(0, 0, 0);
+      UI.textSize(20);
+      UI.textAlign("left", "top");
+      UI.text(game.player.name, 25, 30);
+
+      UI.noStroke();
+      UI.fill(255, 0, 0);
+      UI.rect(125, 25, 100 * (game.player.health / 100), 25);
+
+      UI.noFill();
+      UI.stroke(0, 0, 0);
+      UI.strokeWeight(3);
+      UI.rect(125, 25, 100, 25);
+
+
+      UI.fill(0, 0, 0);
+      UI.textSize(20);
+      UI.textAlign("left", "top");
+      UI.text(`${game.player.XP} XP`, 250, 30);
     }
+    //  else {
+    //   console.log("Game is loading...");
+    // }
+
+
+    // draw UI over it
+
   },
   buttons: [
     new Button({
-      x: 65,
+      x: UI.width - 165,
       y: 35,
       width: 100,
       height: 50,

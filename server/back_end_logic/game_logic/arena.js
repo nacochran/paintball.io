@@ -40,9 +40,9 @@ const maps = [
 // this will require that each map has a certain # of spawn points
 // such that the # of players cannot exceed that #
 const availableSpawnPoints = [
-  { x: -5, y: -6, z: 0 },
-  { x: 0, y: -6, z: 0 },
-  { x: 5, y: -6, z: 0 },
+  { x: -5, y: -2, z: 0 },
+  { x: 0, y: -2, z: 0 },
+  { x: 5, y: -2, z: 0 },
 ];
 function getPlayerSpawnPoint() {
   if (availableSpawnPoints.length < 1) return null;
@@ -59,6 +59,9 @@ export default class Arena {
     this.id = config.id;
     // arena name (created by user)
     this.name = config.name;
+
+    // for guest users
+    this.usernames = [];
 
     // ARENA STATE
     // in_queue --> in load queue in arenas page
@@ -260,6 +263,7 @@ export default class Arena {
     // tell each player/connection that the game has started
     const playerStates = Object.entries(this.players).map(([id, player]) => ({
       id: id,
+      name: player.username,
       state: player.state
     }));
     const blockStates = Object.entries(this.blocks).map(([id, block]) => ({
@@ -267,12 +271,12 @@ export default class Arena {
       state: block.state
     }));
 
-    console.log("Block states: ");
-    Object.values(this.blocks).forEach((block) => {
-      console.log("Position: ", block.state.position);
-      console.log("Size: ", block.state.size);
-    });
-    console.log(blockStates);
+    // console.log("Block states: ");
+    // Object.values(this.blocks).forEach((block) => {
+    //   console.log("Position: ", block.state.position);
+    //   console.log("Size: ", block.state.size);
+    // });
+    // console.log(blockStates);
 
     for (const socketId in this.players) {
       const playerSocket = io.sockets.sockets.get(socketId);
