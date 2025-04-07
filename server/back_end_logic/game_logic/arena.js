@@ -70,6 +70,8 @@ export default class Arena {
     // active --> currently being played
     this.state = "in_queue";
 
+    this.max_players = config.max_players || 10;
+
     // GAME ENTITIES
     // right now all entities will be represented as 
     // either players or blocks on the back-end

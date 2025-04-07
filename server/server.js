@@ -371,7 +371,18 @@ const connections = {};
 app.get('/arenas', async (req, res) => {
   try {
     const arenas = await db.get_arenas_in_load_queue();
-    console.log(arenas);
+
+    let arena_objects = [];
+
+    arenas.forEach((arena) => {
+      console.log("Printing arena in /arenas");
+
+      const arena_object = arenas_in_queue[arena.unique_id];
+
+      console.log("arena_object", arena_object);
+
+      arena_objects.push(arena_object);
+    });
     res.json({ arenas });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch arenas' });
