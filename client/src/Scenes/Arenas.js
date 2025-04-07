@@ -65,18 +65,24 @@ const arenaScene = {
         arenaDiv.style.padding = '10px';
         arenaDiv.style.marginBottom = '10px';
 
+        let usernames = arena.usernames.join(',');
+
         if (arena.arena_creator == sceneManager.user || arena.arena_creator == socketManager.get_socket_id()) {
           arenaDiv.innerHTML = `
-            <h3>${arena.name}</h3>
+            <h3>${arena.name} | <span class='num-players'>${arena.num_players}</span> / <span class='max-players'>${arena.max_players}</span></h3>
             <button class="join-arena-btn" data-id="${arena.unique_id}">Join Arena</button>
             <button class="start-arena-btn" data-id="${arena.unique_id}">Start Game</button>
+            <p class="users-in-arena" style="display: none;">${usernames}</p>
           `;
+
         }
         else {
           arenaDiv.innerHTML = `
-            <h3>${arena.name}</h3>
+            <h3>${arena.name} | <span class='num-players'>${arena.num_players}</span> / <span class='max-players'>${arena.max_players}</span></h3>
             <button class="join-arena-btn" data-id="${arena.unique_id}">Join Arena</button>
+            <p class="users-in-arena" style="display: none;">${usernames}</p>
             `;
+
         }
 
 
@@ -87,6 +93,24 @@ const arenaScene = {
       document.querySelectorAll('.join-arena-btn').forEach(button => {
         button.addEventListener('click', function () {
           const arenaId = this.getAttribute('data-id');
+          const arenaDiv = this.closest('.arena');
+          const usernames = arenaDiv.querySelector('.users-in-arena').textContent.split(',');
+          const numPlayers = parseInt(arenaDiv.querySelector('.num-players').textContent);
+          const maxPlayers = parseInt(arenaDiv.querySelector('.max-players').textContent);
+
+          // Check if user is already in the arena
+          if (usernames.includes(sceneManager.user)) {
+            alert("You're already in this arena!");
+            return;
+          }
+
+          // Check if the arena is full
+          if (numPlayers >= maxPlayers) {
+            alert("This arena is full!");
+            return;
+          }
+
+          // Proceed with joining the arena
           console.log('Joining arena:', arenaId);
           socketManager.join_arena(arenaId, sceneManager.user);
 
@@ -97,6 +121,7 @@ const arenaScene = {
           });
         });
       });
+
 
       document.querySelectorAll('.start-arena-btn').forEach(button => {
         button.addEventListener('click', function () {
