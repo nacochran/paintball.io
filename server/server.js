@@ -381,9 +381,16 @@ app.get('/arenas', async (req, res) => {
 
       console.log("arena_object", arena_object);
 
-      arena_objects.push(arena_object);
+      arena_objects.push({
+        num_players: arena_object.usernames.length,
+        max_players: arena_object.max_players,
+        arena_creator: arena.arena_creator,
+        unique_id: arena.unique_id,
+        name: arena.name,
+        users: arena_object.usernames
+      });
     });
-    res.json({ arenas });
+    res.json({ arena_objects });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch arenas' });
   }
