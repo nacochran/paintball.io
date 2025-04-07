@@ -382,6 +382,8 @@ app.get('/arenas', async (req, res) => {
 app.post('/create-arena', async (req, res) => {
   const { name, connection_id } = req.body;
 
+  console.log(connection_id);
+
   if (!name || name.trim() === '') {
     return res.status(400).json({ error: 'Arena name is required' });
   }
