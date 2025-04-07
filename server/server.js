@@ -391,19 +391,16 @@ app.get('/arenas', async (req, res) => {
 
 // create a new arena (add to load queue)
 app.post('/create-arena', async (req, res) => {
-  const { name, connection_id } = req.body;
-
-  console.log(connection_id);
-
+  const { name, id } = req.body;
   if (!name || name.trim() === '') {
     return res.status(400).json({ error: 'Arena name is required' });
   }
 
   try {
-    const arena = await db.create_arena(name, connection_id);
+    const arena = await db.create_arena(name, id);
 
     arenas_in_queue[arena.unique_id] = new Arena({
-      arena_creator: connection_id,
+      arena_creator: id,
       id: arena.unique_id,
       name: arena.name
     });

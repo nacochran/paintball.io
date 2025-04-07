@@ -65,9 +65,7 @@ const arenaScene = {
         arenaDiv.style.padding = '10px';
         arenaDiv.style.marginBottom = '10px';
 
-        console.log("Testing ids: ", arena.arena_creator, socketManager.get_socket_id());
-
-        if (arena.arena_creator == socketManager.get_socket_id()) {
+        if (arena.arena_creator == sceneManager.user) {
           arenaDiv.innerHTML = `
             <h3>${arena.name}</h3>
             <button class="join-arena-btn" data-id="${arena.unique_id}">Join Arena</button>
@@ -130,13 +128,13 @@ const arenaScene = {
 
       const arenaName = document.getElementById('arena-name').value;
       try {
-        console.log("Socket Id: ", socketManager.get_socket_id());
+        console.log("User id: ", sceneManager.user);
         const response = await fetch('/create-arena', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ name: arenaName, connection_id: socketManager.get_socket_id() })
+          body: JSON.stringify({ name: arenaName, id: sceneManager.user })
         });
 
         const result = await response.json();
