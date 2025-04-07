@@ -175,7 +175,7 @@ export default class Database {
 
 
   // Create a new arena
-  async create_arena(name) {
+  async create_arena(name, creator_id) {
     try {
       // Helper function to generate a random string of length 10
       function generateRandom9DigitNumber() {
@@ -194,9 +194,11 @@ export default class Database {
         existingArena = await this.db.query("SELECT id FROM arenas WHERE unique_id = $1", [uniqueId]);
       }
 
+      console.log("Creating arena in database with conneciton id: ", connection_id);
+
       // Insert the new arena with the unique_id
-      const query = "INSERT INTO arenas (name, unique_id, state) VALUES ($1, $2, 'in_load_queue') RETURNING id, name, unique_id, created_at";
-      const { rows } = await this.db.query(query, [name.trim(), uniqueId]);
+      const query = "INSERT INTO arenas (name, unique_id, state, arena_creator) VALUES ($1, $2, 'in_load_queue', $3) RETURNING id, name, unique_id, created_at";
+      const { rows } = await this.db.query(query, [name.trim(), uniqueId, creator_id]);
 
       return rows[0];
     } catch (error) {
