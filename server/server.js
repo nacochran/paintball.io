@@ -375,11 +375,8 @@ app.get('/arenas', async (req, res) => {
     let arena_objects = [];
 
     arenas.forEach((arena) => {
-      console.log("Printing arena in /arenas");
 
       const arena_object = arenas_in_queue[arena.unique_id];
-
-      console.log("arena_object", arena_object);
 
       arena_objects.push({
         num_players: arena_object.usernames.length,
@@ -391,9 +388,7 @@ app.get('/arenas', async (req, res) => {
       });
     });
 
-    console.log("arena_objects ont he backend: ", arena_objects);
-
-    res.json({ arena_objects: arena_objects });
+    res.json({ arenas: arena_objects });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch arenas' });
   }
