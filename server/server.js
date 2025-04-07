@@ -410,6 +410,18 @@ app.post('/create-arena', async (req, res) => {
   }
 });
 
+// destroy arenas
+app.post('/destroy-arenas', async (req, res) => {
+  const { id } = req.body;
+
+  try {
+    await db.destroy_arenas(id);
+    // res.status(201).json({ message: 'Arena created successfully', arena });
+  } catch (error) {
+    // res.status(500).json({ error: 'Failed to create arena' });
+  }
+});
+
 function generateGuestName(existingUsernames) {
   return "Guest" + existingUsernames.length;
 }

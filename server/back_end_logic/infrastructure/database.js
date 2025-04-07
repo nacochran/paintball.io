@@ -160,6 +160,16 @@ export default class Database {
     }
   }
 
+  async destroy_arenas(id) {
+    try {
+      console.log("Destroying arenas created by user_id: ", id);
+      const query = "DELETE FROM arenas WHERE unique_id = $1";
+      await this.db.query(query, [id]);
+    } catch (error) {
+      throw error;
+    }
+  }
+
 
   // get all active arenas
   async get_active_arenas() {

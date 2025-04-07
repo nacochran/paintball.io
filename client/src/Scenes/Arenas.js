@@ -134,7 +134,7 @@ const arenaScene = {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ name: arenaName, id: sceneManager.user })
+          body: JSON.stringify({ name: arenaName, id: sceneManager.user || socketManager.get_socket_id() })
         });
 
         const result = await response.json();
