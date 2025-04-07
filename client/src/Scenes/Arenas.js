@@ -65,12 +65,22 @@ const arenaScene = {
         arenaDiv.style.padding = '10px';
         arenaDiv.style.marginBottom = '10px';
 
-        arenaDiv.innerHTML = `
+        console.log("Testing ids: ", arena.arena_creator, socketManager.get_socket_id());
+
+        if (arena.arena_creator == socketManager.get_socket_id()) {
+          arenaDiv.innerHTML = `
             <h3>${arena.name}</h3>
             <button class="join-arena-btn" data-id="${arena.unique_id}">Join Arena</button>
-            ${(arena.arena_creator == socketManager.get_socket_id()) && <button class="start-arena-btn" data-id="${arena.unique_id}">Start Game</button>
-          }
+            <button class="start-arena-btn" data-id="${arena.unique_id}">Start Game</button>
           `;
+        }
+        else {
+          arenaDiv.innerHTML = `
+            <h3>${arena.name}</h3>
+            <button class="join-arena-btn" data-id="${arena.unique_id}">Join Arena</button>
+            `;
+        }
+
 
         arenaList.appendChild(arenaDiv);
       });
