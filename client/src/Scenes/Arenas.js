@@ -21,6 +21,8 @@ const arenaScene = {
     UI.width = window.innerWidth;
     UI.height = window.innerHeight;
 
+    socketManager.establish_connection();
+
     // Clear and create the arena list container
     const htmlContent = document.querySelector('.html-content');
     htmlContent.innerHTML = `
@@ -77,8 +79,9 @@ const arenaScene = {
         button.addEventListener('click', function () {
           const arenaId = this.getAttribute('data-id');
           console.log('Joining arena:', arenaId);
+          socketManager.join_arena(arenaId, sceneManager.user);
 
-          socketManager.establish_connection(arenaId, sceneManager.user, () => {
+          socketManager.on_start(() => {
             console.log("Arena started by another player...");
             clearInterval(arenaInterval);
             sceneManager.createTransition('play');
