@@ -390,7 +390,10 @@ app.get('/arenas', async (req, res) => {
         users: arena_object.usernames
       });
     });
-    res.json({ arena_objects });
+
+    console.log("arena_objects ont he backend: ", arena_objects);
+
+    res.json({ arena_objects: arena_objects });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch arenas' });
   }
