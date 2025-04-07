@@ -32,28 +32,31 @@ export default class SocketManager {
     });
   }
 
-  // establish WebSocket connection to a particular arena
-  establish_connection(arena_id, user, onStart) {
+  join_arena(arena_id, user) {
+    // Join arena after connecting
     this.arena = arena_id;
+    this.socket.emit('join-arena', {
+      arena: this.arena,
+      user: user,
+      id: this.socket.id
+    });
+  }
 
+  on_start(onStart) {
+    this.socket.once('start-arena', () => {
+      onStart();
+    });
+  }
+
+  // establish WebSocket connection to a particular arena
+  establish_connection() {
     this.socket = io("https://ancient-beach-65819-22e4a65f5327.herokuapp.com/");
     // this.socket = io("http://localhost:5000");
 
     console.log("Socket ID: ", this.socket.id);
 
     this.socket.once('connect', () => {
-      //console.log('Connected to server via WebSocket. My ID:', this.socket.id);
-
-      // Join arena after connecting
-      this.socket.emit('join-arena', {
-        arena: this.arena,
-        user: user,
-        id: this.socket.id
-      });
-    });
-
-    this.socket.once('start-arena', () => {
-      onStart();
+      console.log('Connected to server via WebSocket. My ID:', this.socket.id);
     });
 
     this.socket.on('disconnect', (reason) => {
