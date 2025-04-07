@@ -65,7 +65,7 @@ const arenaScene = {
         arenaDiv.style.padding = '10px';
         arenaDiv.style.marginBottom = '10px';
 
-        if (arena.arena_creator == sceneManager.user) {
+        if (arena.arena_creator == sceneManager.user || arena.arena_creator == socketManager.get_socket_id()) {
           arenaDiv.innerHTML = `
             <h3>${arena.name}</h3>
             <button class="join-arena-btn" data-id="${arena.unique_id}">Join Arena</button>
