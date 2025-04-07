@@ -59,6 +59,23 @@ export default class SocketManager {
 
     this.socket.on('disconnect', (reason) => {
       console.warn("⚠️ Socket disconnected unexpectedly:", reason);
+
+
+      // guest users create arenas by their socke IDs
+      // destroy all arenas created by 'guest users'
+      (async () => {
+        try {
+          await fetch('/destroy-arenas', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: socketManager.get_socket_id() })
+          });
+        } catch (err) {
+          console.error('Failed to create arena:', err);
+        }
+      })();
     });
 
   }
