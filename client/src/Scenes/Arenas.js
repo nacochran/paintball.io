@@ -65,7 +65,7 @@ const arenaScene = {
         arenaDiv.style.padding = '10px';
         arenaDiv.style.marginBottom = '10px';
 
-        let usernames = arena.usernames.join(',');
+        let usernames = arena.users.join(',');
 
         if (arena.arena_creator == sceneManager.user || arena.arena_creator == socketManager.get_socket_id()) {
           arenaDiv.innerHTML = `

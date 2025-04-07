@@ -3903,7 +3903,7 @@ void main() {
       </form>
       </div>
     </div>
-    `;let e,t=async()=>{const r=await(await fetch("/arenas",{method:"GET",headers:{"Content-Type":"application/json"}})).json(),o=document.getElementById("arena-list");o.innerHTML="",r.arenas.forEach(a=>{const c=document.createElement("div");c.classList.add("arena"),c.style.border="1px solid black",c.style.padding="10px",c.style.marginBottom="10px";let l=a.usernames.join(",");a.arena_creator==Ie.user||a.arena_creator==Bt.get_socket_id()?c.innerHTML=`
+    `;let e,t=async()=>{const r=await(await fetch("/arenas",{method:"GET",headers:{"Content-Type":"application/json"}})).json(),o=document.getElementById("arena-list");o.innerHTML="",r.arenas.forEach(a=>{const c=document.createElement("div");c.classList.add("arena"),c.style.border="1px solid black",c.style.padding="10px",c.style.marginBottom="10px";let l=a.users.join(",");a.arena_creator==Ie.user||a.arena_creator==Bt.get_socket_id()?c.innerHTML=`
             <h3>${a.name} | <span class='num-players'>${a.num_players}</span> / <span class='max-players'>${a.max_players}</span></h3>
             <button class="join-arena-btn" data-id="${a.unique_id}">Join Arena</button>
             <button class="start-arena-btn" data-id="${a.unique_id}">Start Game</button>
