@@ -416,16 +416,16 @@ app.post('/create-arena', async (req, res) => {
 });
 
 // destroy arenas
-app.post('/destroy-arenas', async (req, res) => {
-  const { id } = req.body;
+// app.post('/destroy-arenas', async (req, res) => {
+//   const { id } = req.body;
 
-  try {
-    await db.destroy_arenas(id);
-    // res.status(201).json({ message: 'Arena created successfully', arena });
-  } catch (error) {
-    // res.status(500).json({ error: 'Failed to create arena' });
-  }
-});
+//   try {
+//     await db.destroy_arenas(id);
+//     // res.status(201).json({ message: 'Arena created successfully', arena });
+//   } catch (error) {
+//     // res.status(500).json({ error: 'Failed to create arena' });
+//   }
+// });
 
 function generateGuestName(existingUsernames) {
   return "Guest" + existingUsernames.length;
@@ -511,12 +511,14 @@ io.on('connection', (socket) => {
   // NOTE: 
   // maybe provide a way for plays to reconnect if they
   // temporarily lost internet connection
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
     console.log(`Player disconnected: ${socket.id}`);
     if (arenas_in_queue[connections[socket.id]]) {
       delete arenas_in_queue[connections[socket.id]].players[socket.id];
+      await db.destroy_arenas(socket.id);
     } else if (active_arenas[connections[socket.id]]) {
       delete active_arenas[connections[socket.id]].players[socket.id];
+      await db.destroy_arenas(socket.id);
     }
     delete connections[socket.id];
   });
