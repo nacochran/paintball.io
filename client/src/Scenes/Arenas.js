@@ -68,7 +68,8 @@ const arenaScene = {
         arenaDiv.innerHTML = `
             <h3>${arena.name}</h3>
             <button class="join-arena-btn" data-id="${arena.unique_id}">Join Arena</button>
-            <button class="start-arena-btn" data-id="${arena.unique_id}">Start Game</button>
+            ${(arena.arena_creator == socketManager.get_socket_id()) && <button class="start-arena-btn" data-id="${arena.unique_id}">Start Game</button>
+          }
           `;
 
         arenaList.appendChild(arenaDiv);
