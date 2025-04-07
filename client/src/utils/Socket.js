@@ -62,7 +62,7 @@ export default class SocketManager {
 
 
       // // guest users create arenas by their socke IDs
-      // // destroy all arenas created by 'guest users'
+      // destroy all arenas created by 'guest users'
       // (async () => {
       //   try {
       //     await fetch('/destroy-arenas', {

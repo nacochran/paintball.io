@@ -113,6 +113,8 @@ const arenaScene = {
           // Proceed with joining the arena
           console.log('Joining arena:', arenaId);
           socketManager.join_arena(arenaId, sceneManager.user);
+          loadArenas();
+
 
           socketManager.on_start(() => {
             console.log("Arena started by another player...");
