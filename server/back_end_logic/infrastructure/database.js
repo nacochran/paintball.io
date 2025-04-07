@@ -194,7 +194,7 @@ export default class Database {
         existingArena = await this.db.query("SELECT id FROM arenas WHERE unique_id = $1", [uniqueId]);
       }
 
-      console.log("Creating arena in database with conneciton id: ", connection_id);
+      console.log("Creating arena in database with conneciton id: ", creator_id);
 
       // Insert the new arena with the unique_id
       const query = "INSERT INTO arenas (name, unique_id, state, arena_creator) VALUES ($1, $2, 'in_load_queue', $3) RETURNING id, name, unique_id, created_at";
