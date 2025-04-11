@@ -518,7 +518,7 @@ io.on('connection', (socket) => {
       await db.destroy_arenas(socket.id);
     } else if (active_arenas[connections[socket.id]]) {
       delete active_arenas[connections[socket.id]].players[socket.id];
-      await db.destroy_arenas(socket.id);
+      // await db.destroy_arenas(socket.id);
     }
     delete connections[socket.id];
   });

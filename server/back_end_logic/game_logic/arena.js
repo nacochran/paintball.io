@@ -186,7 +186,18 @@ export default class Arena {
 
     // update contrller rotation based on camera orientation from front-end
     if (player.camera.quaternion !== null) {
-      pController.updateOrientation(player.camera.quaternion);
+      // GLITCHING!!!
+
+      const q = player.camera.quaternion;
+      const quaternion = new CANNON.Quaternion(q.x, q.y, q.z);
+
+      const euler = new CANNON.Vec3();
+      quaternion.toEuler(euler);
+
+      const yawOnlyQuaternion = new CANNON.Quaternion();
+      yawOnlyQuaternion.setFromEuler(0, euler.y, 0);
+
+      pController.updateOrientation(yawOnlyQuaternion);
     }
 
     // Apply movement forces based on inputs
