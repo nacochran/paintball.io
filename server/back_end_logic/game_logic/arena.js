@@ -117,19 +117,31 @@ export default class Arena {
     // for now we create a temporary stage for blocks
     this.blocks[++this.blockID] = {
       state: {
-        position: { x: -10, y: -10, z: 0 },
-        size: { width: 40, height: 1, depth: 20 }
+        position: { x: -30, y: -10, z: -20 },
+        size: { width: 60, height: 1, depth: 40 }
       },
     };
     this.blocks[++this.blockID] = {
       state: {
-        position: { x: -5, y: -9, z: 0 },
+        position: { x: -5, y: -9, z: 15 },
         size: { width: 2, height: 2, depth: 2 }
       },
     };
     this.blocks[++this.blockID] = {
       state: {
-        position: { x: 5, y: -9, z: 0 },
+        position: { x: 5, y: -9, z: 15 },
+        size: { width: 2, height: 2, depth: 2 }
+      },
+    };
+    this.blocks[++this.blockID] = {
+      state: {
+        position: { x: -5, y: -9, z: -15 },
+        size: { width: 2, height: 2, depth: 2 }
+      },
+    };
+    this.blocks[++this.blockID] = {
+      state: {
+        position: { x: 5, y: -9, z: -15 },
         size: { width: 2, height: 2, depth: 2 }
       },
     };

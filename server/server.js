@@ -355,17 +355,17 @@ const connections = {};
 
 // mostly for testing
 // in case server restarts
-(async () => {
+// (async () => {
 
-  // reload arenas in queue if
-  const db_arenas = await db.get_arenas_in_load_queue();
-  for (let arena of db_arenas) {
-    arenas_in_queue[arena.unique_id] = new Arena({
-      id: arena.unique_id,
-      name: arena.name
-    });
-  }
-})();
+//   // reload arenas in queue if
+//   const db_arenas = await db.get_arenas_in_load_queue();
+//   for (let arena of db_arenas) {
+//     arenas_in_queue[arena.unique_id] = new Arena({
+//       id: arena.unique_id,
+//       name: arena.name
+//     });
+//   }
+// })();
 
 // get arenas in load queue
 app.get('/arenas', async (req, res) => {
@@ -436,6 +436,11 @@ io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
   socket.on('join-arena', (data) => {
+    if (socket.id in connections) {
+      console.log("Player already joined an arena and cannot switch.");
+      return;
+    }
+
     if (arenas_in_queue[data.arena]) {
       if (arenas_in_queue[data.arena].players[socket.id]) {
         console.log(`Player already in arena: ${socket.id}`);

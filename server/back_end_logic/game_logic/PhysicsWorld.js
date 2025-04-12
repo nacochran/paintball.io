@@ -1,29 +1,6 @@
 import * as CANNON from 'cannon-es';
 import CannonDebugger from 'cannon-es-debugger';
 
-function logBodyPositionsAndSizes(world) {
-  world.bodies.forEach(body => {
-    const position = body.position;
-    let size;
-
-    // Check if the body has a shape with a size (Box, Sphere, etc.)
-    if (body.shapes && body.shapes.length > 0) {
-      // Example for Box shape, you can extend this for other shapes like Sphere, Cylinder, etc.
-      const shape = body.shapes[0]; // Assuming the first shape (if multiple shapes exist)
-      if (shape instanceof CANNON.Box) {
-        size = shape.halfExtents; // Box size
-      } else if (shape instanceof CANNON.Sphere) {
-        size = shape.radius; // Sphere radius
-      } else {
-        size = 'Unknown Shape';
-      }
-    }
-
-    // Log the body info
-    console.log(`Body ID: ${body.id}, Position: (${position.x}, ${position.y}, ${position.z}), Size: ${size}`);
-  });
-}
-
 class PhysicsWorld {
   constructor(config) {
     this.world = new CANNON.World({
@@ -57,13 +34,6 @@ class PhysicsWorld {
 
   // 
   add_body(type, config) {
-    console.log("Testing add_body", config);
-    // // divide size units by 2 in order to make them consistent with ThreeJS units
-    // config.size.x /= 2;
-    config.size.y /= 2;
-    // config.size.z /= 2;
-
-    console.log("Testing Cannon Vecs: ", new CANNON.Vec3(0, 0, 0));
     const new_body = this.body_types[type](config);
     this.world.addBody(new_body);
     return new_body;
@@ -98,6 +68,7 @@ class PhysicsWorld {
   // Can be called in any loop to update physics world iteratively
   update() {
     this.world.fixedStep();
+    // same as world.step?
   }
 
   clone() {
