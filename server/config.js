@@ -3,6 +3,8 @@ import { URL } from "url"; // For parsing the connection string
 
 dotenv.config();
 
+// testing...
+
 let databaseUrl;
 
 // heroku connection string
