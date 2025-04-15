@@ -1,11 +1,3 @@
-Model Information:
-* title:	Bubble Gun
-* source:	https://sketchfab.com/3d-models/bubble-gun-1a5b0bda94ff414c960cb995a91511a8
-* author:	SuperMopsek (https://sketchfab.com/pajamakeke)
-
-Model License:
-* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
-* requirements:	Author must be credited. Commercial use is allowed.
-
-If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
-This work is based on "Bubble Gun" (https://sketchfab.com/3d-models/bubble-gun-1a5b0bda94ff414c960cb995a91511a8) by SuperMopsek (https://sketchfab.com/pajamakeke) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+version https://git-lfs.github.com/spec/v1
+oid sha256:06057e8352dbf575c18b15ec5ac52826a5540f23cffba91cb08eafbd34b1de18
+size 670
