@@ -1,4 +1,6 @@
 client/dist/public/assets/* filter=lfs diff=lfs merge=lfs -text
+client/dist/public/assets/*.glb filter=lfs diff=lfs merge=lfs -text
+client/dist/public/assets/*.gltf filter=lfs diff=lfs merge=lfs -text
 ./client/dist/public/assets/** filter=lfs diff=lfs merge=lfs -text
 *.bin filter=lfs diff=lfs merge=lfs -text
 *.glb filter=lfs diff=lfs merge=lfs -text
