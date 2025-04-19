@@ -1,0 +1,11 @@
+Model Information:
+* title:	CARTOON GUN
+* source:	https://sketchfab.com/3d-models/cartoon-gun-5dc0e8caa2984998817c3a5c7f1e4b5e
+* author:	RonaldoMainente (https://sketchfab.com/RonaldoMainente)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "CARTOON GUN" (https://sketchfab.com/3d-models/cartoon-gun-5dc0e8caa2984998817c3a5c7f1e4b5e) by RonaldoMainente (https://sketchfab.com/RonaldoMainente) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

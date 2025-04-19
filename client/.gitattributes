@@ -1,0 +1,8 @@
+client/public/assets/gltf/pistol.bin filter=lfs diff=lfs merge=lfs -text
+client/public/assets/gltf/pistol.glb filter=lfs diff=lfs merge=lfs -text
+client/public/assets/gltf/pistol.gltf filter=lfs diff=lfs merge=lfs -text
+client/public/assets/gltf/pistol/pistol.gltf filter=lfs diff=lfs merge=lfs -text
+client/public/assets/gltf/pistol/pistol.glb filter=lfs diff=lfs merge=lfs -text
+client/public/assets/gltf/pistol/pistol.bin filter=lfs diff=lfs merge=lfs -text
+client/public/assets/gltf/rpg/rpg.bin filter=lfs diff=lfs merge=lfs -text
+client/public/assets/gltf/rpg/rpg.gltf filter=lfs diff=lfs merge=lfs -text
