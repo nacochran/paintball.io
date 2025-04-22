@@ -231,6 +231,8 @@ export default class Arena {
       pController.jump();
     }
 
+    pController.update();
+
     // 6. Update Player State
     const body = pController.body;
     player.state.position = { x: body.position.x, y: body.position.y, z: body.position.z };

@@ -55,6 +55,8 @@ const arenaScene = {
 
       const result = await response.json();
 
+      console.log(result);
+
       const arenaList = document.getElementById('arena-list');
       arenaList.innerHTML = '';
 

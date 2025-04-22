@@ -3,7 +3,7 @@ import PhysicsWorld from './PhysicsWorld.js';
 
 
 // initalize physics world
-let physics_world = new PhysicsWorld({});
+const physics_world = new PhysicsWorld({});
 
 // players will not collide with other players
 physics_world.create_group("players");

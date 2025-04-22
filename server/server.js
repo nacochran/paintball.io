@@ -355,17 +355,17 @@ const connections = {};
 
 // mostly for testing
 // in case server restarts
-// (async () => {
+(async () => {
 
-//   // reload arenas in queue if
-//   const db_arenas = await db.get_arenas_in_load_queue();
-//   for (let arena of db_arenas) {
-//     arenas_in_queue[arena.unique_id] = new Arena({
-//       id: arena.unique_id,
-//       name: arena.name
-//     });
-//   }
-// })();
+  // reload arenas in queue if
+  const db_arenas = await db.get_arenas_in_load_queue();
+  for (let arena of db_arenas) {
+    arenas_in_queue[arena.unique_id] = new Arena({
+      id: arena.unique_id,
+      name: arena.name
+    });
+  }
+})();
 
 // get arenas in load queue
 app.get('/arenas', async (req, res) => {
@@ -390,6 +390,7 @@ app.get('/arenas', async (req, res) => {
 
     res.json({ arenas: arena_objects });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: 'Failed to fetch arenas' });
   }
 });
