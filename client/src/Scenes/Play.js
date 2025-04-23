@@ -172,12 +172,11 @@ class Game {
         if (index !== -1) {
           this.entities.splice(index, 1);
         }
+      } else {
+        entityToUpdate.targetPos = new THREE.Vector3(state.position.x, state.position.y, state.position.z);
+        entityToUpdate.health = state.health;
+        entityToUpdate.XP = state.XP;
       }
-
-      entityToUpdate.targetPos = new THREE.Vector3(state.position.x, state.position.y, state.position.z);
-      entityToUpdate.health = state.health;
-
-      entityToUpdate.XP = state.XP;
     });
   }
 
