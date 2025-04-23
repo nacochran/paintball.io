@@ -27,6 +27,15 @@ export default class OpponentPlayer extends PhysicsEntity {
     this.health = 100;
   }
 
+  destroy_mesh(scene) {
+    if (this.shape?.mesh && scene) {
+      scene.remove(this.shape.mesh);
+      this.shape.mesh.geometry.dispose();
+      if (this.shape.mesh.material.map) this.shape.mesh.material.map.dispose();
+      this.shape.mesh.material.dispose();
+    }
+  }
+
   update() {
     // update shape's position, size, and orientation
     this.shape.update();
