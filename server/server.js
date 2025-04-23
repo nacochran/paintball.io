@@ -32,7 +32,7 @@ const server = http.createServer(app);
 // Initalize Socket.io on the server
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "https://ancient-beach-65819-22e4a65f5327.herokuapp.com"],
+    origin: ["http://localhost:3000", "https://paintball-io-572f29a27711.herokuapp.com/"],
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -105,7 +105,7 @@ app.use('/client/dist', express.static(path.join(__dirname, '..', 'client', 'dis
 // app.use(cors({ origin: false }));
 // Or optionally reference a different domain if the front-end is hosted elsewhere
 app.use(cors({
-  origin: ["https://ancient-beach-65819-22e4a65f5327.herokuapp.com"],
+  origin: ["https://paintball-io-572f29a27711.herokuapp.com/"],
   // origin: [ "http://localhost:3000"], 
   methods: ["GET", "POST"],
   credentials: true

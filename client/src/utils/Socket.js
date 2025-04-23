@@ -50,7 +50,7 @@ export default class SocketManager {
 
   // establish WebSocket connection to a particular arena
   establish_connection() {
-    this.socket = io("https://ancient-beach-65819-22e4a65f5327.herokuapp.com/");
+    this.socket = io("https://paintball-io-572f29a27711.herokuapp.com/");
     // this.socket = io("http://localhost:5000");
 
     this.socket.once('connect', () => {
