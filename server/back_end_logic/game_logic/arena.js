@@ -251,7 +251,9 @@ export default class Arena {
     if (player.inputs['damage_dealt']) {
       player.inputs['damage_dealt'].forEach(hit => {
         console.log("Damage dealt!", hit.recipient, hit.damage);
-        this.players[hit.recipient].state.health -= hit.damage;
+        if (this.players[hit.recipient]) {
+          this.players[hit.recipient].state.health -= hit.damage;
+        }
       });
     }
 
