@@ -4,6 +4,7 @@ import { Shape } from "../utils/ShapeHelper.js";
 export default class OpponentPlayer extends PhysicsEntity {
   constructor(config) {
     super(config);
+    this.entityType = 'opponent-player';
 
     this.shape = config.shape || new Shape({
       type: 'cube',
@@ -15,10 +16,15 @@ export default class OpponentPlayer extends PhysicsEntity {
     // additional configurations
     this.shape.mesh.castShadow = true;
     this.shape.mesh.receiveShadow = true;
+    this.shape.mesh.userData.entityType = 'opponent';
+    this.shape.mesh.userData.opponent = this;
 
     this.shape.attach(this);
 
     this.targetPos = this.position;
+
+    this.name = config.name || "Test User";
+    this.health = 100;
   }
 
   update() {

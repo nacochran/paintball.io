@@ -1,5 +1,5 @@
 import PhysicsEntity from "./PhysicsEntity.js";
-import { keys, socketManager } from "../Globals.js";
+import { keys, mouse, socketManager } from "../Globals.js";
 import { Shape } from "../utils/ShapeHelper.js";
 import * as THREE from 'three';
 import BoundingBox from "../utils/BoundingBox.js";
@@ -7,7 +7,7 @@ import Pistol from "./Guns/Pistol.js";
 import RPG from "./Guns/Rpg.js";
 
 export default class Player extends PhysicsEntity {
-  constructor(config) {
+  constructor(scene, config) {
     super(config);
 
     this.camera = config.camera;
@@ -29,6 +29,15 @@ export default class Player extends PhysicsEntity {
 
     this.eyeHeight = 1.5;
 
+    this.shape = new Shape({
+      type: "cube",
+      size: this.size,
+      position: this.position,
+      color: 0x00ff00
+    });
+
+    this.shape.attach(this);
+
     this.weaponHolder = new THREE.Object3D();
     this.weaponHolder.name = "WeaponHolder";
     //this.weaponHolder.position.set(0.3, -0.3, -0.6);
@@ -39,8 +48,6 @@ export default class Player extends PhysicsEntity {
     this.weaponHolder.add(holderHelper);
 
     this.loadWeaponModel(scene);
-
-    this.boundingBox = new BoundingBox(this, scene);
     this.slideStartTime = null;
     this.sceneRef = scene;
 
@@ -132,5 +139,14 @@ export default class Player extends PhysicsEntity {
     // TODO: use interpolation
     // for now just set entiti pos to target pos
     this.position = this.targetPos;
+
+    this.shape.mesh.position.copy(this.position);
+    this.shape.update();
+
+    if (mouse.clicking()) {
+      const forward = new THREE.Vector3();
+      this.camera.getWorldDirection(forward);
+      this.weapon.fire(this.position, forward, Date.now() / 1000, this.sceneRef);
+    }
   }
 }

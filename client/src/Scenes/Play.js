@@ -28,51 +28,25 @@ class Game {
 
     // player who is playing on this browser connection
     this.player = null;
+
+    this.weaponLight = null;
+    this.cameraTarget = null;
   }
 
-  /*loadModel() {
-    return new Promise((resolve => {
-      // Imports Custom Shape (your existing GLTF loading code)
-      const url = (DEV_MODE == 'front-end') ? "./assets/gltf/TestLevelOne.glb" : "client/dist/public/assets/gltf/TestLevelOne.glb";
-      const testImportShape = new Shape({
-        type: 'gltf',
-        url: url,
-        scene: scene,
-        size: { width: 1, height: 1, depth: 1 },
-        position: new THREE.Vector3(0, -50, 0),
-        onLoad: (loadedGroup) => {
-          console.log("Model fully loaded. Now updating game entities.");
-          if (loadedGroup.childEntities && loadedGroup.childEntities.length) {
-            loadedGroup.childEntities.forEach(entity => {
-              game.entities.push(entity);
-            });
-          }
-          resolve(testImportShape);
-        }
-      });
-    }));
-  }*/
-
+  // pre conditions
+  // camera is already defined
   async setup() {
     this.entities = [];
 
     // Add ambient light
-    const ambientLight = new THREE.AmbientLight(0x404040);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     scene.add(ambientLight);
     scene.background = new THREE.Color(0x87ceeb); // Sky-blue
 
     // Add directional light
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(0, 10, 5).normalize();
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    directionalLight.position.set(5, 10, 7).normalize();
     scene.add(directionalLight);
-
-    // Create the camera
-    camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.01,
-      2000
-    );
 
     // Wait until we receive initial game state from back-end
     socketManager.request_initial_game_state();
@@ -84,7 +58,7 @@ class Game {
         s = player.state.size;
 
       if (player.id === socketManager.get_socket_id()) {
-        const new_player = new Player({
+        const new_player = new Player(scene, {
           position: new THREE.Vector3(pos.x, pos.y, pos.z),
           camera: camera,
           id: player.id,
@@ -105,6 +79,16 @@ class Game {
       }
     });
 
+    // test opponent player
+    const new_test_player = new OpponentPlayer({
+      position: new THREE.Vector3(-5, -2, 0),
+      id: "testid257",
+      size: { width: 2, height: 2, depth: 2 },
+      name: "Test Player"
+    });
+    this.entities.push(new_test_player);
+    this.entity_dict["testid257"] = new_test_player;
+
     // create blocks
     game_state.blocks.forEach(block => {
       const pos = block.state.position,
@@ -124,8 +108,18 @@ class Game {
 
     // setup camera
     // position it at the player's eye level initially
-    this.camera = { target: this.player };
-    camera.position.copy(this.player.position).add(new THREE.Vector3(0, 1.5, 0));
+    this.cameraTarget = this.player;
+
+    // this.weaponLight = new THREE.PointLight(0xffffff, 1.2, 3);
+    // this.weaponLight.position.set(0.3, -0.1, -0.5); // Slightly to the right and down
+    // camera.add(this.weaponLight); // Attach to camera so it moves with the view
+
+    const crosshair = new THREE.Mesh(
+      new THREE.RingGeometry(0.01, 0.015, 32),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+    );
+    crosshair.position.z = -1;
+    camera.add(crosshair);
 
     // handle pointer lock controls
     this.pointerLockControls = new PointerLockControls(camera, renderer.domElement);
@@ -152,11 +146,11 @@ class Game {
    * The camera is placed at the player's eye level, and the player's yaw is updated from the camera.
    */
   updateCameraPosition() {
-    const player = this.camera.target;
-    // Use half the standing eye height when crouching:
+    const player = this.cameraTarget;
     const eyeOffsetY = (player.state === "crouching") ? 0.15 : 0.98;
     camera.position.copy(player.position).add(new THREE.Vector3(0, eyeOffsetY, 0));
   }
+
 
   /**
    * Updates game entities from back-end
@@ -175,8 +169,47 @@ class Game {
 
   play() {
     // Update entities (your physics, collision, etc.)
+    const vector = new THREE.Vector3();
+    const widthHalf = UI.width / 2;
+    const heightHalf = UI.height / 2;
+
     this.entities.forEach(entity => {
       entity.update(this.entities);
+
+      if (entity.entityType === "opponent-player") {
+        // Project entity's position to 2D screen space
+        vector.copy(entity.position);
+        vector.y += 1.5; // Raise the label a bit above the head
+        vector.project(camera);
+
+        const x = vector.x * widthHalf + widthHalf;
+        const y = -(vector.y * heightHalf) + heightHalf;
+
+        // Only draw if it's on screen
+        if (vector.z >= -1 && vector.z <= 1) {
+          // Draw name
+          UI.fill(0, 0, 0);
+          UI.textSize(16);
+          UI.textAlign("center", "bottom");
+          UI.text(entity.name, x, y);
+
+          // Draw health bar
+          const barWidth = 60;
+          const barHeight = 8;
+          const healthPercent = Math.max(0, Math.min(1, entity.health / 100));
+
+          // Background bar
+          UI.noFill();
+          UI.stroke(0, 0, 0);
+          UI.strokeWeight(2);
+          UI.rect(x - barWidth / 2, y + 5, barWidth, barHeight);
+
+          // Health fill
+          UI.noStroke();
+          UI.fill(255 * (1 - healthPercent), 255 * healthPercent, 0); // Red to green
+          UI.rect(x - barWidth / 2, y + 5, barWidth * healthPercent, barHeight);
+        }
+      }
     });
 
     // No need to update any FirstPersonControls – PointerLockControls automatically listens to mouse movement.
@@ -242,11 +275,26 @@ const playScene = {
       UI.strokeWeight(3);
       UI.rect(125, 25, 100, 25);
 
+      // (Date.now()/1000 - game.player.weapon.lastFireTime)/game.player.weapon.fireRate;
+      UI.noStroke();
+      UI.fill(169, 189, 21);
+      UI.rect(
+        250,
+        25,
+        Math.min(100, 100 * ((Date.now() / 1000 - game.player.weapon.lastFireTime) / game.player.weapon.fireRate)),
+        25
+      );
+
+
+      UI.noFill();
+      UI.stroke(0, 0, 0);
+      UI.strokeWeight(3);
+      UI.rect(250, 25, 100, 25);
 
       UI.fill(0, 0, 0);
       UI.textSize(20);
       UI.textAlign("left", "top");
-      UI.text(`${game.player.XP} XP`, 250, 30);
+      UI.text(`${game.player.XP} XP`, 375, 30);
     }
     //  else {
     //   console.log("Game is loading...");

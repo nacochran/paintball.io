@@ -25,7 +25,9 @@ keys.register("Space", "Space");
 keys.register("Shift", "ShiftLeft");
 keys.register("Ctrl", "ControlLeft");
 keys.register("C", "KeyC");
-keys.register("LeftMouseButton", 0)
+keys.register("N", "KeyN");
+//keys.register("LeftMouseButton", 0)
+// mouse instead?
 
 // Register Button (Shape) Types
 Button.registerType('rect', rectToRect);
@@ -61,6 +63,9 @@ function app(currentTime) {
 
   // Run time intervals
   timeManager.runIntervals(deltaTime);
+
+  // Clear mouse actions
+  mouse.resetActions();
 
   // Queue the next frame
   requestAnimationFrame(app);

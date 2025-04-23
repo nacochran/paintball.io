@@ -12,6 +12,9 @@ class Shape {
     this.mesh = ShapeBuilder.shapes[this.type](config);
     this.mesh.position.copy(this.position);
     this.entity = null;
+
+    // metadata used for detecting collisions
+    this.mesh.userData.shape = this;
   }
 
   translate(x, y, z) {
