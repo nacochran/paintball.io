@@ -164,5 +164,9 @@ export default class Player extends PhysicsEntity {
       }
     }
 
+    if (this.health <= 0) {
+      socketManager.disconnect();
+      sceneManager.createTransition('menu');
+    }
   }
 }

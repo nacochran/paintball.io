@@ -165,8 +165,18 @@ class Game {
       const state = entity.state;
 
       const entityToUpdate = entity_dict[entity.id];
+      if (!entityToUpdate || entityToUpdate.health <= 0) {
+        delete entity_dict[entity.id];
+
+        const index = this.entities.indexOf(entityToUpdate);
+        if (index !== -1) {
+          this.entities.splice(index, 1);
+        }
+      }
+
       entityToUpdate.targetPos = new THREE.Vector3(state.position.x, state.position.y, state.position.z);
       entityToUpdate.health = state.health;
+
       entityToUpdate.XP = state.XP;
     });
   }
