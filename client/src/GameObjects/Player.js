@@ -53,6 +53,8 @@ export default class Player extends PhysicsEntity {
     this.slideStartTime = null;
     this.sceneRef = scene;
 
+    this.loadWeaponModel(scene);
+
     this.weapon = new Pistol();
   }
 
@@ -82,7 +84,7 @@ export default class Player extends PhysicsEntity {
     if (keys.pressed("Space")) this.inputs['jump'] = true;
   }
 
-  /*loadWeaponModel(scene) {
+  loadWeaponModel(scene) {
     const pistolShape = new Shape({
       type: "gltf",
       url: "/assets/gltf/pistol/pistol.glb",
@@ -95,7 +97,7 @@ export default class Player extends PhysicsEntity {
 
         group.name = "GunModel";
 
-        // 🔄 Center mesh geometry
+        // Center mesh geometry
         group.traverse((child) => {
           if (child.isMesh) {
             child.geometry.computeBoundingBox();
@@ -105,16 +107,16 @@ export default class Player extends PhysicsEntity {
           }
         });
 
-        // 🔧 Adjust transform for first-person view
+        // Adjust transform for first-person view
         group.scale.set(0.15, 0.15, 0.15);
         group.rotation.set(0, -Math.PI / 2, 0); // 90 degree to the left model loads sideways for some reason
         group.position.set(0.3, this.eyeHeight - 3, -0.5); // Eye level, slightly right/front
 
-        // 📌 Attach to weapon holder
+        // Attach to weapon holder
         this.weaponHolder.add(group);
         this.weaponModel = group;
 
-        // 🛠 Debug helpers
+        // Debug helpers
         group.add(new THREE.AxesHelper(0.3));
         const gunBox = new THREE.BoxHelper(group, 0xffff00);
         scene.add(gunBox);
@@ -127,7 +129,7 @@ export default class Player extends PhysicsEntity {
         console.error("❌ Failed to load gun model", err);
       }
     });
-  }*/
+  }
 
   /**
    * Main update loop for the player.
