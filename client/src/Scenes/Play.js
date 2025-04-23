@@ -8,54 +8,38 @@ import { Shape, ShapeBuilder } from "../utils/ShapeHelper.js";
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import UI from "../utils/UI.js";
 
-// Forward-declare variables
 let scene, camera, renderer;
 
 class Game {
   constructor() {
-
-    // indicates whether the game is finished loading or not
     this.finished_loading = false;
-
     this.clock = new THREE.Clock();
     this.pointerLockControls = null;
     this.socketID = null;
-
-    // list of games entities : used for iterating over
     this.entities = [];
-    // dictionary of game entities : used for updating an entity from the server based on its ID
     this.entity_dict = {};
-
-    // player who is playing on this browser connection
     this.player = null;
-
     this.weaponLight = null;
     this.cameraTarget = null;
   }
 
-  // pre conditions
-  // camera is already defined
   async setup() {
     this.entities = [];
 
-    // Add ambient light
     const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     scene.add(ambientLight);
-    scene.background = new THREE.Color(0x87ceeb); // Sky-blue
+    scene.background = new THREE.Color(0x87ceeb);
 
-    // Add directional light
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
     directionalLight.position.set(5, 10, 7).normalize();
     scene.add(directionalLight);
 
-    // Wait until we receive initial game state from back-end
     socketManager.request_initial_game_state();
     const game_state = await socketManager.get_initial_game_state();
 
-    // create players
     game_state.players.forEach(player => {
       const pos = player.state.position,
-        s = player.state.size;
+            s = player.state.size;
 
       if (player.id === socketManager.get_socket_id()) {
         const new_player = new Player(scene, {
@@ -79,10 +63,9 @@ class Game {
       }
     });
 
-    // create blocks
     game_state.blocks.forEach(block => {
       const pos = block.state.position,
-        s = block.state.size;
+            s = block.state.size;
 
       const new_block = new Block({
         position: new THREE.Vector3(pos.x, pos.y, pos.z),
@@ -96,13 +79,7 @@ class Game {
       this.entity_dict[block.id] = new_block;
     });
 
-    // setup camera
-    // position it at the player's eye level initially
     this.cameraTarget = this.player;
-
-    // this.weaponLight = new THREE.PointLight(0xffffff, 1.2, 3);
-    // this.weaponLight.position.set(0.3, -0.1, -0.5); // Slightly to the right and down
-    // camera.add(this.weaponLight); // Attach to camera so it moves with the view
 
     const crosshair = new THREE.Mesh(
       new THREE.RingGeometry(0.01, 0.015, 32),
@@ -111,22 +88,18 @@ class Game {
     crosshair.position.z = -1;
     camera.add(crosshair);
 
-    // handle pointer lock controls
     this.pointerLockControls = new PointerLockControls(camera, renderer.domElement);
-    scene.add(this.pointerLockControls.object);
+    scene.add(this.pointerLockControls.getObject());
+
     renderer.domElement.addEventListener('click', () => {
-      renderer.domElement.requestPointerLock();
+      this.pointerLockControls.lock();
     });
 
-    // Add entity meshes to the scene
     this.entities.forEach(entity => {
       if (entity.shape && entity.shape.mesh) {
         scene.add(entity.shape.mesh);
       }
     });
-
-    // Initial camera setup
-    this.updateCameraPosition();
 
     setInterval(() => {
       if (socketManager.socket) {
@@ -139,44 +112,25 @@ class Game {
       }
     }, 2000);
 
-
     this.finished_loading = true;
   }
 
-  /**
-   * Updates the camera position to follow the player in first-person view.
-   * The camera is placed at the player's eye level, and the player's yaw is updated from the camera.
-   */
-  updateCameraPosition() {
-    const player = this.cameraTarget;
-    const eyeOffsetY = (player.state === "crouching") ? 0.15 : 0.98;
-    camera.position.copy(player.position).add(new THREE.Vector3(0, eyeOffsetY, 0));
-  }
-
-
-  /**
-   * Updates game entities from back-end
-   * @entities is a list of entities whose states have changed
-   */
   updateGameEntities(entities) {
     const entity_dict = this.entity_dict;
 
     entities.forEach(entity => {
       const state = entity.state;
-
       const entityToUpdate = entity_dict[entity.id];
+
       if (!entityToUpdate || entityToUpdate.health <= 0) {
-        entityToUpdate.destroy_mesh(scene);
-        if (!entityToUpdate) {
-          return;
-        } else if (entityToUpdate.id === game.player.id) {
+        entityToUpdate?.destroy_mesh(scene);
+        if (!entityToUpdate) return;
+        if (entityToUpdate.id === game.player.id) {
           socketManager.disconnect();
           sceneManager.createTransition('menu');
         }
         const index = this.entities.indexOf(entityToUpdate);
-        if (index !== -1) {
-          this.entities.splice(index, 1);
-        }
+        if (index !== -1) this.entities.splice(index, 1);
         delete entity_dict[entity.id];
       } else {
         entityToUpdate.targetPos = new THREE.Vector3(state.position.x, state.position.y, state.position.z);
@@ -187,7 +141,6 @@ class Game {
   }
 
   play() {
-    // Update entities (your physics, collision, etc.)
     const vector = new THREE.Vector3();
     const widthHalf = UI.width / 2;
     const heightHalf = UI.height / 2;
@@ -196,62 +149,46 @@ class Game {
       entity.update(this.entities);
 
       if (entity.entityType === "opponent-player") {
-        // Project entity's position to 2D screen space
         vector.copy(entity.position);
-        vector.y += 1.5; // Raise the label a bit above the head
+        vector.y += 1.5;
         vector.project(camera);
 
         const x = vector.x * widthHalf + widthHalf;
         const y = -(vector.y * heightHalf) + heightHalf;
 
-        // Only draw if it's on screen
         if (vector.z >= -1 && vector.z <= 1) {
-          // Draw name
           UI.fill(0, 0, 0);
           UI.textSize(16);
           UI.textAlign("center", "bottom");
           UI.text(entity.name, x, y);
 
-          // Draw health bar
           const barWidth = 60;
           const barHeight = 8;
           const healthPercent = Math.max(0, Math.min(1, entity.health / 100));
 
-          // Background bar
           UI.noFill();
           UI.stroke(0, 0, 0);
           UI.strokeWeight(2);
           UI.rect(x - barWidth / 2, y + 5, barWidth, barHeight);
 
-          // Health fill
           UI.noStroke();
-          UI.fill(255 * (1 - healthPercent), 255 * healthPercent, 0); // Red to green
+          UI.fill(255 * (1 - healthPercent), 255 * healthPercent, 0);
           UI.rect(x - barWidth / 2, y + 5, barWidth * healthPercent, barHeight);
         }
       }
     });
 
-    // No need to update any FirstPersonControls – PointerLockControls automatically listens to mouse movement.
-    // Update the camera position to follow the player.
-    this.updateCameraPosition();
-
-    // Render the scene
     renderer.render(scene, camera);
-
-    // sync browser to server
     socketManager.receive_game_state(this.updateGameEntities.bind(this));
   }
 }
 
 const game = new Game();
 
-// play scene : runs game
 const playScene = {
   name: "Play",
   init: function () {
-    // Setup Three.js
     scene = new THREE.Scene();
-    // (The camera is created in game.setup, so this instantiation here is not strictly necessary.)
     camera = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
@@ -264,16 +201,12 @@ const playScene = {
     document.getElementById("threed-canvas").innerHTML = '';
     document.getElementById("threed-canvas").appendChild(renderer.domElement);
 
-    // Add pointer lock event listeners here:
     renderer.domElement.addEventListener('click', () => {
       game.pointerLockControls.lock();
     });
 
-    document.addEventListener('pointerlockerror', () => {
-      // console.error("Error while attempting to lock pointer");
-    });
+    document.addEventListener('pointerlockerror', () => {});
 
-    // Setup Game
     game.setup();
   },
   display: function () {
@@ -294,7 +227,6 @@ const playScene = {
       UI.strokeWeight(3);
       UI.rect(125, 25, 100, 25);
 
-      // (Date.now()/1000 - game.player.weapon.lastFireTime)/game.player.weapon.fireRate;
       UI.noStroke();
       UI.fill(169, 189, 21);
       UI.rect(
@@ -303,7 +235,6 @@ const playScene = {
         Math.min(100, 100 * ((Date.now() / 1000 - game.player.weapon.lastFireTime) / game.player.weapon.fireRate)),
         25
       );
-
 
       UI.noFill();
       UI.stroke(0, 0, 0);
@@ -325,18 +256,13 @@ const playScene = {
       display: function () {
         UI.stroke(255, 255, 255);
         UI.strokeWeight(5);
-
-        // Button color changes on hover
         if (this.isInside(mouse, this)) {
           UI.fill(175, 175, 175);
           mouse.setCursor('pointer');
         } else {
           UI.fill(200, 200, 200, 200);
         }
-
-        // Draw the button rectangle
         UI.rect(this.x, this.y, this.width, this.height, 10);
-
         UI.textSize(20);
         UI.textStyle('Arial');
         UI.fill(0, 0, 0);

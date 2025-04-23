@@ -17,13 +17,13 @@ export default class Player extends PhysicsEntity {
       this.camera = config.camera;
       this.targetPos = this.position;
 
-      this.size = { width: 1, height: 2, depth: 1 };
+      this.size = { width: 2, height: 4, depth: 2 };
       this.health = 100;
       this.XP = 0;
       this.inputs = {};
       this.t = 0;
       this.name = config.name;
-      this.eyeHeight = .75;
+      this.eyeHeight = .25;
 
       this.shape = new Shape({
         type: "cube",
@@ -48,9 +48,7 @@ export default class Player extends PhysicsEntity {
         }
       });
 
-      const holderHelper = new THREE.AxesHelper(0.2);
-      holderHelper.raycast = () => {};
-      this.weaponHolder.add(holderHelper);
+      // Removed debug AxesHelper from weaponHolder
 
       this.slideStartTime = null;
       this.sceneRef = scene;
@@ -89,6 +87,11 @@ export default class Player extends PhysicsEntity {
     if (keys.pressed("Space")) this.inputs['jump'] = true;
   }
 
+  updateEyeHeight() {
+    const targetHeight = (this.state === "crouching" || this.state === "sliding") ? 1.0 : 1.5;
+    this.eyeHeight += (targetHeight - this.eyeHeight) * 0.2;
+  }
+
   loadWeaponModel(scene) {
     console.log("loadWeaponModel called");
 
@@ -115,14 +118,10 @@ export default class Player extends PhysicsEntity {
 
         group.scale.set(0.15, 0.15, 0.15);
         group.rotation.set(0, -Math.PI / 2, 0);
-        group.position.set(0.3, this.eyeHeight - 3, -0.5);
+        group.position.set(0.2, this.eyeHeight - 3.3, -0.5);
 
         this.weaponHolder.add(group);
         this.weaponModel = group;
-
-        group.add(new THREE.AxesHelper(0.3));
-        //const gunBox = new THREE.BoxHelper(group, 0xffff00);
-        //scene.add(gunBox);
 
         console.log("Gun adjusted and attached");
         console.log("World Position:", group.getWorldPosition(new THREE.Vector3()));
@@ -136,10 +135,18 @@ export default class Player extends PhysicsEntity {
 
   update(entities) {
     this.handleMovement();
+    this.updateEyeHeight();
 
     this.position = this.targetPos;
     this.shape.mesh.position.copy(this.position);
     this.shape.update();
+
+    // Update camera position and rotation
+    const camOffset = new THREE.Vector3(0, this.eyeHeight, 0);
+    this.camera.position.copy(this.position).add(camOffset);
+
+    const worldEuler = new THREE.Euler().setFromQuaternion(this.camera.quaternion, "YXZ");
+    this.rotation = new THREE.Euler(0, worldEuler.y, 0);
 
     if (mouse.clicking()) {
       const origin = new THREE.Vector3();
