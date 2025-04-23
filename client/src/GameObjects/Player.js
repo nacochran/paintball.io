@@ -156,11 +156,11 @@ export default class Player extends PhysicsEntity {
       if (damageInfo) {
         this.XP += 10; // something basic for now
         this.inputs['update_XP'] = this.XP;
-        console.log("Testing damageInfo:", damageInfo);
-        this.inputs['damage_dealt'] = {
+        this.inputs['damage_dealt'] = (this.inputs['damage_dealt']) ? this.inputs['damage_dealt'] : [];
+        this.inputs['damage_dealt'].push({
           damage: damageInfo.damage,
           recipient: damageInfo.recipient
-        };
+        });
       }
     }
 

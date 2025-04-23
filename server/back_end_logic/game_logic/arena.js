@@ -115,7 +115,9 @@ export default class Arena {
     Object.keys(this.players).forEach(playerId => {
       this.players[playerId].state = {
         position: getPlayerSpawnPoint(),
-        size: { width: 3, height: 3, depth: 3 }
+        size: { width: 3, height: 3, depth: 3 },
+        health: 100,
+        XP: 0
       };
     });
 
@@ -239,6 +241,18 @@ export default class Arena {
 
     if (player.inputs['jump']) {
       pController.jump();
+    }
+
+    if (player.inputs['update_XP']) {
+      console.log("Increase XP!");
+      player.state.XP = player.inputs['update_XP'];
+    }
+
+    if (player.inputs['damage_dealt']) {
+      player.inputs['damage_dealt'].forEach(hit => {
+        console.log("Damage dealt!", hit.recipient, hit.damage);
+        this.players[hit.recipient].state.health -= hit.damage;
+      });
     }
 
     pController.update();

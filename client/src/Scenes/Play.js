@@ -166,6 +166,8 @@ class Game {
 
       const entityToUpdate = entity_dict[entity.id];
       entityToUpdate.targetPos = new THREE.Vector3(state.position.x, state.position.y, state.position.z);
+      entityToUpdate.health = state.health;
+      entityToUpdate.XP = state.XP;
     });
   }
 
