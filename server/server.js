@@ -99,6 +99,8 @@ app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, "public")));
 app.use('/client/dist', express.static(path.join(__dirname, '..', 'client', 'dist')));
 
+// Serve Vite manifest if needed
+app.use('/assets', express.static(path.join(__dirname, '..', 'client', 'dist', 'public', 'assets')));
 
 // Enable CORS
 // NOTE: For deployment, possible disable it
@@ -668,6 +670,14 @@ passport.deserializeUser((user, cb) => cb(null, user));
 
 // deleted users from unverified_users table after 7 days
 db.refresh_unverified_users();
+
+
+app.get('*', (req, res, next) => {
+  // If the request has a file extension, skip to next middleware (e.g., static)
+  if (path.extname(req.path)) return next();
+
+  res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
+});
 
 //////////////////////////////////////////////////
 // Run Server                                   //

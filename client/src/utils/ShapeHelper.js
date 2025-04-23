@@ -94,6 +94,16 @@ ShapeBuilder.registerShape('gltf', (config) => {
 
   const onLoadCallback = config.onLoad;
 
+  // 🔍 Debug fetch of file to verify MIME and format
+  fetch(config.url)
+    .then(res => res.text())
+    .then(text => {
+      console.warn("🧪 Preview of glTF file (first 100 chars):", text.slice(0, 100));
+    })
+    .catch(err => {
+      console.error("⚠️ Could not preview glTF file:", err);
+    });
+
   group.loadPromise = new Promise((resolve, reject) => {
     loader.load(
       config.url,
@@ -104,7 +114,6 @@ ShapeBuilder.registerShape('gltf', (config) => {
             child.castShadow = true;
             child.receiveShadow = true;
 
-            // ✅ Fix transparency bug and texture gamma
             if (child.material) {
               if (child.material.transparent && child.material.opacity < 1) {
                 child.material.opacity = 1;
@@ -113,7 +122,6 @@ ShapeBuilder.registerShape('gltf', (config) => {
 
               child.material.side = THREE.FrontSide;
 
-              // ✅ Ensure texture maps use sRGB encoding
               if (child.material.map) {
                 child.material.map.encoding = THREE.sRGBEncoding;
               }
@@ -151,7 +159,6 @@ ShapeBuilder.registerShape('gltf', (config) => {
         });
 
         group.add(gltf.scene);
-
         group.position.set(config.position?.x || 0, config.position?.y || 0, config.position?.z || 0);
         group.scale.set(config.size?.width || 1, config.size?.height || 1, config.size?.depth || 1);
         group.updateMatrixWorld(true);
@@ -160,7 +167,6 @@ ShapeBuilder.registerShape('gltf', (config) => {
           group.childEntities.forEach((entity) => {
             const updatedPos = entity.shape.mesh.getWorldPosition(new THREE.Vector3());
             const updatedQuat = entity.shape.mesh.getWorldQuaternion(new THREE.Quaternion());
-
             entity.position.copy(updatedPos);
             entity.rotation = new THREE.Euler().setFromQuaternion(updatedQuat);
             entity.boundingBox?.update();

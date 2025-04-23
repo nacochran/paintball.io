@@ -6,74 +6,79 @@ import BoundingBox from "../utils/BoundingBox.js";
 import Pistol from "./Guns/Pistol.js";
 import RPG from "./Guns/Rpg.js";
 
+console.log("Player.js module loaded");
+
 export default class Player extends PhysicsEntity {
   constructor(scene, config) {
     super(config);
+    try {
+      console.log("Player constructor started");
 
-    this.camera = config.camera;
+      this.camera = config.camera;
+      this.targetPos = this.position;
 
-    this.targetPos = this.position;
+      this.size = { width: 1, height: 2, depth: 1 };
+      this.health = 100;
+      this.XP = 0;
+      this.inputs = {};
+      this.t = 0;
+      this.name = config.name;
+      this.eyeHeight = .75;
 
-    // default player size
-    this.size = { width: 1, height: 2, depth: 1 };
+      this.shape = new Shape({
+        type: "cube",
+        size: this.size,
+        position: this.position,
+        color: 0x00ff00
+      });
 
-    // player stats
-    this.health = 100;
-    this.XP = 0;
+      this.shape.attach(this);
 
-    // input management
-    this.inputs = {};
-    this.t = 0;
+      this.weaponHolder = new THREE.Object3D();
+      this.weaponHolder.raycast = () => {};
+      this.weaponHolder.name = "WeaponHolder";
+      this.weaponHolder.position.set(0.3, this.eyeHeight, -0.6);
 
-    this.name = config.name;
+      setTimeout(() => {
+        if (this.camera) {
+          this.camera.add(this.weaponHolder);
+          console.log("Weapon holder attached to camera");
+        } else {
+          console.warn("Camera not available when attaching weapon holder");
+        }
+      });
 
-    this.eyeHeight = 1.5;
+      const holderHelper = new THREE.AxesHelper(0.2);
+      holderHelper.raycast = () => {};
+      this.weaponHolder.add(holderHelper);
 
-    this.shape = new Shape({
-      type: "cube",
-      size: this.size,
-      position: this.position,
-      color: 0x00ff00
-    });
+      this.slideStartTime = null;
+      this.sceneRef = scene;
 
-    this.shape.attach(this);
+      console.log("About to call loadWeaponModel");
+      this.loadWeaponModel(scene);
 
-    this.weaponHolder = new THREE.Object3D();
-    this.weaponHolder.raycast = () => { };
-    this.weaponHolder.name = "WeaponHolder";
-    //this.weaponHolder.position.set(0.3, -0.3, -0.6);
-    this.weaponHolder.position.set(0.3, this.eyeHeight, -0.6);
-    this.shape.mesh.add(this.weaponHolder);
+      this.weapon = new Pistol();
 
-    const holderHelper = new THREE.AxesHelper(0.2);
-    holderHelper.raycast = () => { };
-    this.weaponHolder.add(holderHelper);
-
-    // this.loadWeaponModel(scene);
-    this.slideStartTime = null;
-    this.sceneRef = scene;
-
-    this.loadWeaponModel(scene);
-
-    this.weapon = new Pistol();
+      console.log("Player constructor completed");
+    } catch (err) {
+      console.error("Error in Player constructor:", err);
+    }
   }
 
-  /**
-   * Process input to set the wish direction and target speed.
-   * Also handles jumping and, if sliding, triggers a long jump.
-   */
   handleMovement() {
     if (++this.t > 5) {
       const camera = this.camera;
+      socketManager.send_inputs(this.inputs, {
+        quaternion: {
+          x: camera.quaternion.x,
+          y: camera.quaternion.y,
+          z: camera.quaternion.z,
+          w: camera.quaternion.w
+        }
+      });
 
-      // send inputs back to server
-      // ALSO: pass back camera right/forward vectors for movement calculations
-      socketManager.send_inputs(this.inputs, { quaternion: { x: camera.quaternion.x, y: camera.quaternion.y, z: camera.quaternion.z, w: camera.quaternion.w } });
-
-      // clear inputs
       this.inputs = {};
-
-      // reset counter
       this.t = 0;
     }
 
@@ -85,19 +90,20 @@ export default class Player extends PhysicsEntity {
   }
 
   loadWeaponModel(scene) {
+    console.log("loadWeaponModel called");
+
     const pistolShape = new Shape({
       type: "gltf",
-      url: "client/dist/public/assets/gltf/pistol/pistol.glb",
+      url: "/assets/gltf/pistol/pistol.glb",
       size: { width: 1, height: 1, depth: 1 },
       position: new THREE.Vector3(0, 0, 0),
       collidable: false,
 
       onLoad: (group) => {
-        console.log("✅ Gun model loaded successfully");
+        console.log("Gun model loaded successfully");
 
         group.name = "GunModel";
 
-        // Center mesh geometry
         group.traverse((child) => {
           if (child.isMesh) {
             child.geometry.computeBoundingBox();
@@ -107,43 +113,31 @@ export default class Player extends PhysicsEntity {
           }
         });
 
-        // Adjust transform for first-person view
         group.scale.set(0.15, 0.15, 0.15);
-        group.rotation.set(0, -Math.PI / 2, 0); // 90 degree to the left model loads sideways for some reason
-        group.position.set(0.3, this.eyeHeight - 3, -0.5); // Eye level, slightly right/front
+        group.rotation.set(0, -Math.PI / 2, 0);
+        group.position.set(0.3, this.eyeHeight - 3, -0.5);
 
-        // Attach to weapon holder
         this.weaponHolder.add(group);
         this.weaponModel = group;
 
-        // Debug helpers
         group.add(new THREE.AxesHelper(0.3));
-        const gunBox = new THREE.BoxHelper(group, 0xffff00);
-        scene.add(gunBox);
+        //const gunBox = new THREE.BoxHelper(group, 0xffff00);
+        //scene.add(gunBox);
 
-        console.log("📦 Gun adjusted and attached");
-        console.log("🌐 World Pos:", group.getWorldPosition(new THREE.Vector3()));
+        console.log("Gun adjusted and attached");
+        console.log("World Position:", group.getWorldPosition(new THREE.Vector3()));
       },
 
       onError: (err) => {
-        console.error("❌ Failed to load gun model", err);
+        console.error("Failed to load gun model", err);
       }
     });
   }
 
-  /**
-   * Main update loop for the player.
-   * Processes input, updates physics, handles collisions,
-   * and updates rotation and transforms for both the shape and bounding box.
-   */
   update(entities) {
-    // TODO send rotation info to back-end.... or mouse movements...
     this.handleMovement();
 
-    // TODO: use interpolation
-    // for now just set entiti pos to target pos
     this.position = this.targetPos;
-
     this.shape.mesh.position.copy(this.position);
     this.shape.update();
 
@@ -153,12 +147,11 @@ export default class Player extends PhysicsEntity {
       const direction = new THREE.Vector3();
       this.camera.getWorldDirection(direction);
 
-      // record damage info to report to server
       const damageInfo = this.weapon.fire(origin, direction, Date.now() / 1000, this.sceneRef);
       if (damageInfo) {
-        this.XP += 10; // something basic for now
+        this.XP += 10;
         this.inputs['update_XP'] = this.XP;
-        this.inputs['damage_dealt'] = (this.inputs['damage_dealt']) ? this.inputs['damage_dealt'] : [];
+        this.inputs['damage_dealt'] = this.inputs['damage_dealt'] || [];
         this.inputs['damage_dealt'].push({
           damage: damageInfo.damage,
           recipient: damageInfo.recipient
