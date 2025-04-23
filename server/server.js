@@ -426,14 +426,14 @@ app.post('/create-arena', async (req, res) => {
     connections[id] = arena.unique_id;
 
     // add one test user
-    const username2 = generateGuestName(arenas_in_queue[arena.unique_id].usernames);
-    arenas_in_queue[arena.unique_id].usernames.push(username2);
-    arenas_in_queue[arena.unique_id].players['test-player-socket-id'] = {
-      inputs: {},
-      camera: { quaternion: null },
-      username: username2
-    };
-    connections['test-player-socket-id'] = arena.unique_id;
+    // const username2 = generateGuestName(arenas_in_queue[arena.unique_id].usernames);
+    // arenas_in_queue[arena.unique_id].usernames.push(username2);
+    // arenas_in_queue[arena.unique_id].players['test-player-socket-id'] = {
+    //   inputs: {},
+    //   camera: { quaternion: null },
+    //   username: username2
+    // };
+    // connections['test-player-socket-id'] = arena.unique_id;
 
     res.status(201).json({ message: 'Arena created successfully', arena });
   } catch (error) {

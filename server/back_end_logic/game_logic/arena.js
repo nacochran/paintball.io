@@ -43,6 +43,13 @@ const availableSpawnPoints = [
   { x: -5, y: -2, z: 0 },
   { x: 0, y: -2, z: 0 },
   { x: 5, y: -2, z: 0 },
+  { x: -5, y: -2, z: 2 },
+  { x: 0, y: -2, z: 2 },
+  { x: 5, y: -2, z: 2 },
+  { x: -5, y: -2, z: -2 },
+  { x: 0, y: -2, z: -2 },
+  { x: 5, y: -2, z: -2 },
+  { x: 10, y: -2, z: 0 }
 ];
 function getPlayerSpawnPoint() {
   if (availableSpawnPoints.length < 1) return null;
