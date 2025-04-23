@@ -1,5 +1,4 @@
 import { io } from "socket.io-client";
-import UI from "../utils/UI.js";
 import { sceneManager } from "../Globals.js";
 
 export default class SocketManager {
@@ -91,16 +90,12 @@ export default class SocketManager {
 
   }
 
-  checkReconnection() {
+  checkReconnection(createPopup) {
     if (!this.socket.connected) {
       console.log("⚠️ Lost connection. Trying to reconnect...");
       this.socket.connect(); // triggers reconnection
 
-      // Optional: notify player in UI
-      UI.fill(255, 0, 0);
-      UI.textSize(20);
-      UI.textAlign("center", "center");
-      UI.text("Reconnecting...", UI.width / 2, 50);
+      createPopup();
     }
   }
 

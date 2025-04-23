@@ -130,7 +130,12 @@ class Game {
 
     setInterval(() => {
       if (socketManager.socket) {
-        socketManager.checkReconnection();
+        socketManager.checkReconnection(() => {
+          UI.fill(255, 0, 0);
+          UI.textSize(20);
+          UI.textAlign("center", "center");
+          UI.text("Reconnecting...", UI.width / 2, 50);
+        });
       }
     }, 2000);
 
