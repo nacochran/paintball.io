@@ -55,8 +55,6 @@ const arenaScene = {
 
       const result = await response.json();
 
-      console.log(result);
-
       const arenaList = document.getElementById('arena-list');
       arenaList.innerHTML = '';
 
@@ -113,13 +111,10 @@ const arenaScene = {
           }
 
           // Proceed with joining the arena
-          console.log('Joining arena:', arenaId);
           socketManager.join_arena(arenaId, sceneManager.user);
           loadArenas();
 
-
           socketManager.on_start(() => {
-            console.log("Arena started by another player...");
             clearInterval(arenaInterval);
             sceneManager.createTransition('play');
           });
@@ -130,7 +125,6 @@ const arenaScene = {
       document.querySelectorAll('.start-arena-btn').forEach(button => {
         button.addEventListener('click', function () {
           const arenaId = this.getAttribute('data-id');
-          console.log("Starting Arena: ", arenaId);
           clearInterval(arenaInterval);
           sceneManager.createTransition('play');
           socketManager.start_arena(arenaId);
@@ -157,7 +151,6 @@ const arenaScene = {
 
       const arenaName = document.getElementById('arena-name').value;
       try {
-        console.log("User id: ", sceneManager.user);
         const response = await fetch('/create-arena', {
           method: 'POST',
           headers: {

@@ -8,7 +8,6 @@ export default class HitscanGun extends Gun {
 
   fire(origin, direction, currentTime, scene) {
     if (!this.readyToFire(currentTime)) {
-      console.log('Waiting to fire');
       return;
     }
 
@@ -18,7 +17,7 @@ export default class HitscanGun extends Gun {
     const intersections = raycaster.intersectObjects(scene.children, true);
 
     if (intersections.length === 0) {
-      console.log("Hitscan shot missed.");
+      // ("Hitscan shot missed.");
       return;
     }
 
@@ -30,10 +29,10 @@ export default class HitscanGun extends Gun {
     // Check if it's an opponent
     if (userData.entityType === 'opponent') {
       const opponent = userData.opponent;
-      console.log(`Hit opponent ID=${opponent.id} at ${firstHit.point.toArray()} (damage: ${this.damage})`);
+      // (`Hit opponent ID=${opponent.id} at ${firstHit.point.toArray()} (damage: ${this.damage})`);
       opponent.health -= this.damage;
     } else {
-      console.log('Shot blocked by wall or non-opponent object:', hitMesh.name || hitMesh.type);
+      // ('Shot blocked by wall or non-opponent object:', hitMesh.name || hitMesh.type);
     }
   }
 

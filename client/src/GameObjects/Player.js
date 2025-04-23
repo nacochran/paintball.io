@@ -49,7 +49,7 @@ export default class Player extends PhysicsEntity {
     holderHelper.raycast = () => { };
     this.weaponHolder.add(holderHelper);
 
-    this.loadWeaponModel(scene);
+    // this.loadWeaponModel(scene);
     this.slideStartTime = null;
     this.sceneRef = scene;
 
@@ -82,7 +82,7 @@ export default class Player extends PhysicsEntity {
     if (keys.pressed("Space")) this.inputs['jump'] = true;
   }
 
-  loadWeaponModel(scene) {
+  /*loadWeaponModel(scene) {
     const pistolShape = new Shape({
       type: "gltf",
       url: "/assets/gltf/pistol/pistol.glb",
@@ -127,7 +127,7 @@ export default class Player extends PhysicsEntity {
         console.error("❌ Failed to load gun model", err);
       }
     });
-  }
+  }*/
 
   /**
    * Main update loop for the player.
@@ -148,7 +148,6 @@ export default class Player extends PhysicsEntity {
     if (mouse.clicking()) {
       const origin = new THREE.Vector3();
       this.camera.getWorldPosition(origin);
-      console.log("Testing origin: ", origin);
       const direction = new THREE.Vector3();
       this.camera.getWorldDirection(direction);
       this.weapon.fire(origin, direction, Date.now() / 1000, this.sceneRef);
