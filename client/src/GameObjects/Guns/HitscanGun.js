@@ -31,6 +31,10 @@ export default class HitscanGun extends Gun {
       const opponent = userData.opponent;
       // (`Hit opponent ID=${opponent.id} at ${firstHit.point.toArray()} (damage: ${this.damage})`);
       opponent.health -= this.damage;
+      return {
+        damage: this.damage,
+        recipient: userData.opponent.id
+      };
     } else {
       // ('Shot blocked by wall or non-opponent object:', hitMesh.name || hitMesh.type);
     }

@@ -150,7 +150,18 @@ export default class Player extends PhysicsEntity {
       this.camera.getWorldPosition(origin);
       const direction = new THREE.Vector3();
       this.camera.getWorldDirection(direction);
-      this.weapon.fire(origin, direction, Date.now() / 1000, this.sceneRef);
+
+      // record damage info to report to server
+      const damageInfo = this.weapon.fire(origin, direction, Date.now() / 1000, this.sceneRef);
+      if (damageInfo) {
+        this.XP += 10; // something basic for now
+        this.inputs['update_XP'] = this.XP;
+        console.log("Testing damageInfo:", damageInfo);
+        this.inputs['damage_dealt'] = {
+          damage: damageInfo.damage,
+          recipient: damageInfo.recipient
+        };
+      }
     }
 
   }
