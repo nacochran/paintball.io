@@ -166,12 +166,20 @@ class Game {
 
       const entityToUpdate = entity_dict[entity.id];
       if (!entityToUpdate || entityToUpdate.health <= 0) {
-        delete entity_dict[entity.id];
-
+        console.log("Testing entity to update: ", entityToUpdate);
+        if (!entityToUpdate) {
+          return;
+        } else if (entityToUpdate.id === game.player.id) {
+          socketManager.disconnect();
+          sceneManager.createTransition('menu');
+        }
         const index = this.entities.indexOf(entityToUpdate);
         if (index !== -1) {
           this.entities.splice(index, 1);
         }
+        delete entity_dict[entity.id];
+        console.log("Testing this.entities: ", this.entities.length);
+        console.log("Testing dict: ", this.entity_dict)
       } else {
         entityToUpdate.targetPos = new THREE.Vector3(state.position.x, state.position.y, state.position.z);
         entityToUpdate.health = state.health;
