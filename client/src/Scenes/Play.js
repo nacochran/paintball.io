@@ -128,6 +128,13 @@ class Game {
     // Initial camera setup
     this.updateCameraPosition();
 
+    setInterval(() => {
+      if (socketManager.socket) {
+        socketManager.checkReconnection();
+      }
+    }, 2000);
+
+
     this.finished_loading = true;
   }
 
@@ -241,7 +248,7 @@ const playScene = {
     });
 
     document.addEventListener('pointerlockerror', () => {
-      //console.error("Error while attempting to lock pointer");
+      // console.error("Error while attempting to lock pointer");
     });
 
     // Setup Game

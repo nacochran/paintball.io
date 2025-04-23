@@ -70,7 +70,7 @@ const arenaScene = {
         if (arena.arena_creator == sceneManager.user || arena.arena_creator == socketManager.get_socket_id()) {
           arenaDiv.innerHTML = `
             <h3>${arena.name} | <span class='num-players'>${arena.num_players}</span> / <span class='max-players'>${arena.max_players}</span></h3>
-            <button class="join-arena-btn" data-id="${arena.unique_id}">Join Arena</button>
+            <button class="delete-arena-btn" data-id="${arena.unique_id}">Delete Arena</button>
             <button class="start-arena-btn" data-id="${arena.unique_id}">Start Game</button>
             <p class="users-in-arena" style="display: none;">${usernames}</p>
           `;
@@ -91,7 +91,7 @@ const arenaScene = {
 
       // Add click listeners to join buttons
       document.querySelectorAll('.join-arena-btn').forEach(button => {
-        button.addEventListener('click', function () {
+        button.addEventListener('click', async function () {
           const arenaId = this.getAttribute('data-id');
           const arenaDiv = this.closest('.arena');
           const usernames = arenaDiv.querySelector('.users-in-arena').textContent.split(',');
@@ -111,7 +111,7 @@ const arenaScene = {
           }
 
           // Proceed with joining the arena
-          socketManager.join_arena(arenaId, sceneManager.user);
+          await socketManager.join_arena(arenaId, sceneManager.user);
           loadArenas();
 
           socketManager.on_start(() => {
@@ -121,13 +121,26 @@ const arenaScene = {
         });
       });
 
+      // add click listeners to delete buttons
+      // Add click listeners to join buttons
+      document.querySelectorAll('.delete-arena-btn').forEach(button => {
+        button.addEventListener('click', async function () {
+          const arenaId = this.getAttribute('data-id');
+          const arenaDiv = this.closest('.arena');
+
+          if (confirm("Are you sure you want to delete this arena?")) {
+            await socketManager.delete_arena(arenaId);
+            arenaDiv.remove();
+          }
+        });
+      });
 
       document.querySelectorAll('.start-arena-btn').forEach(button => {
-        button.addEventListener('click', function () {
+        button.addEventListener('click', async function () {
           const arenaId = this.getAttribute('data-id');
           clearInterval(arenaInterval);
           sceneManager.createTransition('play');
-          socketManager.start_arena(arenaId);
+          await socketManager.start_arena(arenaId);
         });
       });
 
@@ -156,7 +169,7 @@ const arenaScene = {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ name: arenaName, id: sceneManager.user || socketManager.get_socket_id() })
+          body: JSON.stringify({ name: arenaName, user: sceneManager.user || socketManager.get_socket_id() })
         });
 
         const result = await response.json();

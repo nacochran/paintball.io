@@ -160,6 +160,25 @@ export default class Database {
     }
   }
 
+  async delete_arena_by_id(arenaId) {
+    try {
+      const query = "DELETE FROM arenas WHERE unique_id = $1";
+      const { rowCount } = await this.db.query(query, [arenaId]);
+
+      if (rowCount === 0) {
+        console.warn(`No arena found with unique_id: ${arenaId}`);
+        return false;
+      }
+
+      console.log(`Arena with unique_id ${arenaId} was deleted.`);
+      return true;
+    } catch (error) {
+      console.error("Error deleting arena:", error.message);
+      throw error;
+    }
+  }
+
+
   async destroy_arenas(id) {
     try {
       console.log("Destroying arenas created by user_id: ", id);

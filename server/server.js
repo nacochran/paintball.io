@@ -352,6 +352,8 @@ const active_arenas = {};
 // maps socketID --> arenaID in either 
 // arenas_in_queue or active_arenas
 const connections = {};
+// for reconnecting
+const reconnectTimeouts = {};
 
 // mostly for testing
 // in case server restarts
@@ -397,12 +399,14 @@ app.get('/arenas', async (req, res) => {
 
 // create a new arena (add to load queue)
 app.post('/create-arena', async (req, res) => {
-  const { name, id } = req.body;
+  const { name, user } = req.body;
   if (!name || name.trim() === '') {
     return res.status(400).json({ error: 'Arena name is required' });
   }
 
   try {
+    console.log("user: ", user);
+    const id = typeof user == 'object' ? user.id : user;
     const arena = await db.create_arena(name, id);
 
     arenas_in_queue[arena.unique_id] = new Arena({
@@ -410,97 +414,105 @@ app.post('/create-arena', async (req, res) => {
       id: arena.unique_id,
       name: arena.name
     });
+
+    // join arena
+    const username = (typeof user == 'object') ? (user.username) : (generateGuestName(arenas_in_queue[arena.unique_id].usernames));
+    arenas_in_queue[arena.unique_id].usernames.push(username);
+    arenas_in_queue[arena.unique_id].players[id] = {
+      inputs: {},
+      camera: { quaternion: null },
+      username: username
+    };
+    connections[id] = arena.unique_id;
+
+    // add one test user
+    const username2 = generateGuestName(arenas_in_queue[arena.unique_id].usernames);
+    arenas_in_queue[arena.unique_id].usernames.push(username2);
+    arenas_in_queue[arena.unique_id].players['test-player-socket-id'] = {
+      inputs: {},
+      camera: { quaternion: null },
+      username: username2
+    };
+    connections['test-player-socket-id'] = arena.unique_id;
+
     res.status(201).json({ message: 'Arena created successfully', arena });
   } catch (error) {
     res.status(500).json({ error: 'Failed to create arena' });
   }
 });
 
-// destroy arenas
-// app.post('/destroy-arenas', async (req, res) => {
-//   const { id } = req.body;
-
-//   try {
-//     await db.destroy_arenas(id);
-//     // res.status(201).json({ message: 'Arena created successfully', arena });
-//   } catch (error) {
-//     // res.status(500).json({ error: 'Failed to create arena' });
-//   }
-// });
-
 function generateGuestName(existingUsernames) {
   return "Guest" + existingUsernames.length;
 }
 
 // Run Socket.io connection listener
+// TODO: Update this to persist connections to a temporary table in our database, in case the server restarts
+// we need a way to persist IO connections for reconnecting users to the server, in case the server crashes
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
-  socket.on('join-arena', (data) => {
+  socket.on('join-arena', (data, callback) => {
     if (socket.id in connections) {
-      console.log("Player already joined an arena and cannot switch.");
-      return;
+      return callback({ success: false, error: "Already joined an arena." });
     }
 
-    if (arenas_in_queue[data.arena]) {
-      if (arenas_in_queue[data.arena].players[socket.id]) {
-        console.log(`Player already in arena: ${socket.id}`);
-      } else {
-        console.log(`Player connected: ${socket.id}`);
-        const username = (data.user) ? (data.user.username) : (generateGuestName(arenas_in_queue[data.arena].usernames));
-        arenas_in_queue[data.arena].usernames.push(username);
-        arenas_in_queue[data.arena].players[socket.id] = {
-          inputs: {},
-          camera: { quaternion: null },
-          username: username
-        };
-        connections[socket.id] = data.arena;
+    const arena = arenas_in_queue[data.arena];
+    if (arena) {
+      const username = data.user?.username || generateGuestName(arena.usernames);
+      arena.usernames.push(username);
+      arena.players[socket.id] = {
+        inputs: {},
+        camera: { quaternion: null },
+        username
+      };
+      connections[socket.id] = data.arena;
 
-        // add one test user
-        const username2 = generateGuestName(arenas_in_queue[data.arena].usernames);
-        arenas_in_queue[data.arena].usernames.push(username2);
-        arenas_in_queue[data.arena].players['test-player-socket-id'] = {
-          inputs: {},
-          camera: { quaternion: null },
-          username: username2
-        };
-        connections['test-player-socket-id'] = data.arena;
-      }
+      return callback({ success: true });
     } else {
-      // TODO: Check if the user is already in active game and 
-      // temporarily got disconnected
-      console.log("Arena is full already, or does not exist.");
+      return callback({ success: false, error: "Arena not found or full." });
     }
-
-    // TODO: should the arena be restarted if the server accidentally restarts?
   });
 
-  socket.on('start-arena', async (data) => {
-    console.log(`Started arena: ${data.arena}`);
+  socket.on('delete-arena', async ({ arenaId }, callback) => {
+    try {
+      const success = await db.delete_arena_by_id(arenaId);
 
-    if (!arenas_in_queue[data.arena]) {
-      console.log(`Arena ${data.arena} does not exist in queue.`);
-      return;
+      if (success) {
+        callback({ success: true });
+      } else {
+        callback({ success: false, error: "Arena not found or already deleted." });
+      }
+    } catch (err) {
+      console.error("Failed to delete arena:", err.message);
+      callback({ success: false, error: "Server error while deleting arena." });
+    }
+  });
+
+  socket.on('start-arena', async (data, callback) => {
+    const arena = arenas_in_queue[data.arena];
+    if (!arena) {
+      return callback?.({ success: false, error: "Arena not in queue." });
     }
 
-    active_arenas[data.arena] = arenas_in_queue[data.arena];
+    active_arenas[data.arena] = arena;
     delete arenas_in_queue[data.arena];
     active_arenas[data.arena].start(io);
-    await db.set_status(data.arena, 'active');
 
-    // (1) Print all connected socket IDs and the number of players
+    try {
+      await db.set_status(data.arena, 'active');
+    } catch (err) {
+      return callback?.({ success: false, error: "Failed to update DB." });
+    }
+
     const playersInArena = Object.keys(active_arenas[data.arena].players);
-    console.log(`Players in Arena ${data.arena}:`, playersInArena);
-    console.log(`Total players in Arena ${data.arena}: ${playersInArena.length}`);
-
-    // (2) Emit "start-arena" to all players in the arena except the one who started it
     playersInArena.forEach(playerId => {
       if (playerId !== socket.id) {
         io.to(playerId).emit('start-arena', { arena: data.arena });
       }
     });
-  });
 
+    return callback?.({ success: true });
+  });
 
   // send connection ID back to user
   socket.on('request-initial-game-state', () => {
@@ -522,23 +534,96 @@ io.on('connection', (socket) => {
     }
   });
 
-
-
-  // NOTE: 
-  // maybe provide a way for plays to reconnect if they
-  // temporarily lost internet connection
-  socket.on('disconnect', async () => {
+  socket.on('disconnect', () => {
     console.log(`Player disconnected: ${socket.id}`);
-    if (arenas_in_queue[connections[socket.id]]) {
-      delete arenas_in_queue[connections[socket.id]].players[socket.id];
-      await db.destroy_arenas(socket.id);
-    } else if (active_arenas[connections[socket.id]]) {
-      delete active_arenas[connections[socket.id]].players[socket.id];
-      // await db.destroy_arenas(socket.id);
+
+    // Set a timeout to delete the player after 10 seconds
+    const timeout = setTimeout(async () => {
+      console.log(`Cleaning up after timeout: ${socket.id}`);
+      const arenaId = connections[socket.id];
+
+      if (arenas_in_queue[arenaId]) {
+        delete arenas_in_queue[arenaId].players[socket.id];
+        await db.destroy_arenas(socket.id);
+      } else if (active_arenas[arenaId]) {
+        delete active_arenas[arenaId].players[socket.id];
+        // await db.destroy_arenas(socket.id);
+      }
+
+      delete connections[socket.id];
+    }, 10000);
+
+    // Save this timeout so we can cancel it if the client reconnects in time
+    reconnectTimeouts[socket.id] = timeout;
+  });
+
+  socket.on('reconnect_attempt', () => {
+    console.log(`Reconnect attempt from: ${socket.id}`);
+  });
+
+  socket.on('reconnect', () => {
+    console.log(`Player reconnected: ${socket.id}`);
+    if (reconnectTimeouts[socket.id]) {
+      clearTimeout(reconnectTimeouts[socket.id]);
+      delete reconnectTimeouts[socket.id];
     }
-    delete connections[socket.id];
+  });
+
+  socket.on('reassociate_socket', ({ oldID }) => {
+    if (connections[oldID]) {
+      const arenaId = connections[oldID];
+      connections[socket.id] = arenaId;
+      if (arenas_in_queue[arenaId]) {
+        arenas_in_queue[arenaId].players[socket.id] = arenas_in_queue[arenaId].players[oldID];
+        delete arenas_in_queue[arenaId].players[oldID];
+      } else if (active_arenas[arenaId]) {
+        active_arenas[arenaId].players[socket.id] = active_arenas[arenaId].players[oldID];
+        delete active_arenas[arenaId].players[oldID];
+      }
+
+      delete connections[oldID];
+      console.log(`Reassociated socket: ${oldID} → ${socket.id}`);
+    }
   });
 });
+
+// cleanup empty arenas
+setInterval(async () => {
+  for (const arenaId in active_arenas) {
+    const arena = active_arenas[arenaId];
+    const players = arena.players;
+
+    if (Object.keys(players).length === 0) {
+      console.log(`Deleting empty active arena: ${arenaId}`);
+
+      try {
+        await db.delete_arena_by_id(arenaId);
+      } catch (err) {
+        console.error(`Failed to delete arena ${arenaId}:`, err);
+      }
+
+      delete active_arenas[arenaId];
+    }
+  }
+
+  for (const arenaId in arenas_in_queue) {
+    const arena = arenas_in_queue[arenaId];
+    const players = arena.players;
+
+    if (Object.keys(players).length === 0) {
+      console.log(`Deleting empty queued arena: ${arenaId}`);
+
+      try {
+        await db.delete_arena_by_id(arenaId);
+      } catch (err) {
+        console.error(`Failed to delete arena ${arenaId}:`, err);
+      }
+
+      delete arenas_in_queue[arenaId];
+    }
+  }
+}, 10 * 1000); // every 10 seconds
+
 
 // // run arenas
 // for (const arenaID in active_arenas) {
