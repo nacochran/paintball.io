@@ -72,8 +72,8 @@ export default class SocketManager {
       reconnectionDelay: 2000,
     };
 
-    this.socket = io("https://paintball-io-572f29a27711.herokuapp.com/", reconnectionObject);
-    //this.socket = io("http://localhost:5000", reconnectionObject);
+    //this.socket = io("https://paintball-io-572f29a27711.herokuapp.com/", reconnectionObject);
+    this.socket = io("http://localhost:5000", reconnectionObject);
 
     this.socket.on('connect', () => {
       console.log('Connected to server via WebSocket. My ID:', this.socket.id);
