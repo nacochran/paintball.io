@@ -455,6 +455,16 @@ io.on('connection', (socket) => {
           username: username
         };
         connections[socket.id] = data.arena;
+
+        // add one test user
+        const username2 = generateGuestName(arenas_in_queue[data.arena].usernames);
+        arenas_in_queue[data.arena].usernames.push(username2);
+        arenas_in_queue[data.arena].players['test-player-socket-id'] = {
+          inputs: {},
+          camera: { quaternion: null },
+          username: username2
+        };
+        connections['test-player-socket-id'] = data.arena;
       }
     } else {
       // TODO: Check if the user is already in active game and 

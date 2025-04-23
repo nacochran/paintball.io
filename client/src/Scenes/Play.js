@@ -80,14 +80,14 @@ class Game {
     });
 
     // test opponent player
-    const new_test_player = new OpponentPlayer({
-      position: new THREE.Vector3(-5, -2, 0),
-      id: "testid257",
-      size: { width: 2, height: 2, depth: 2 },
-      name: "Test Player"
-    });
-    this.entities.push(new_test_player);
-    this.entity_dict["testid257"] = new_test_player;
+    // const new_test_player = new OpponentPlayer({
+    //   position: new THREE.Vector3(-5, -2, 0),
+    //   id: "testid257",
+    //   size: { width: 2, height: 2, depth: 2 },
+    //   name: "Test Player"
+    // });
+    // this.entities.push(new_test_player);
+    // this.entity_dict["testid257"] = new_test_player;
 
     // create blocks
     game_state.blocks.forEach(block => {

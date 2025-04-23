@@ -39,12 +39,14 @@ export default class Player extends PhysicsEntity {
     this.shape.attach(this);
 
     this.weaponHolder = new THREE.Object3D();
+    this.weaponHolder.raycast = () => { };
     this.weaponHolder.name = "WeaponHolder";
     //this.weaponHolder.position.set(0.3, -0.3, -0.6);
     this.weaponHolder.position.set(0.3, this.eyeHeight, -0.6);
     this.shape.mesh.add(this.weaponHolder);
 
     const holderHelper = new THREE.AxesHelper(0.2);
+    holderHelper.raycast = () => { };
     this.weaponHolder.add(holderHelper);
 
     this.loadWeaponModel(scene);
@@ -144,9 +146,13 @@ export default class Player extends PhysicsEntity {
     this.shape.update();
 
     if (mouse.clicking()) {
-      const forward = new THREE.Vector3();
-      this.camera.getWorldDirection(forward);
-      this.weapon.fire(this.position, forward, Date.now() / 1000, this.sceneRef);
+      const origin = new THREE.Vector3();
+      this.camera.getWorldPosition(origin);
+      console.log("Testing origin: ", origin);
+      const direction = new THREE.Vector3();
+      this.camera.getWorldDirection(direction);
+      this.weapon.fire(origin, direction, Date.now() / 1000, this.sceneRef);
     }
+
   }
 }
