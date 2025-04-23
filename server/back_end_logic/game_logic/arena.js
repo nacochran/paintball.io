@@ -160,6 +160,9 @@ export default class Arena {
       const p = this.players[playerId],
         s = p.state;
 
+      console.log("IMPORTANT TESTING AREA: ");
+      console.log("this.players: ", playerId, this.players[playerId])
+
       // create new physics body for player
       const player_entity = new PlayerController({
         world: this.world,
