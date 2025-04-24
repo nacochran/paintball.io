@@ -76,7 +76,7 @@ export default class SceneManager {
         const closed = w / 2 - (this.time / this.duration) * w / 2;
 
         // Set fill color to black
-        ctx.fillStyle = 'red';
+        ctx.fillStyle = 'rgb(67, 67, 67)';
 
 
 
@@ -101,7 +101,7 @@ export default class SceneManager {
         const closed = 0 + (this.time / this.duration) * w / 2;
 
         // Set fill color to black
-        ctx.fillStyle = 'red';
+        ctx.fillStyle = 'rgb(67, 67, 67)';
 
         // Draw the closing rectangles
         ctx.fillRect(-w / 2 + closed, 0, w / 2, h);
