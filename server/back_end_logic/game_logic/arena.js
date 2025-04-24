@@ -40,16 +40,16 @@ const maps = [
 // this will require that each map has a certain # of spawn points
 // such that the # of players cannot exceed that #
 const availableSpawnPoints = [
-  { x: -5, y: -2, z: 0 },
-  { x: 0, y: -2, z: 0 },
-  { x: 5, y: -2, z: 0 },
-  { x: -5, y: -2, z: 2 },
-  { x: 0, y: -2, z: 2 },
-  { x: 5, y: -2, z: 2 },
-  { x: -5, y: -2, z: -2 },
-  { x: 0, y: -2, z: -2 },
-  { x: 5, y: -2, z: -2 },
-  { x: 10, y: -2, z: 0 }
+  { x: -15, y: -2, z: 0 },
+  { x: 0, y: -2, z: 15 },
+  { x: 15, y: -2, z: 10 },
+  { x: -15, y: -2, z: 10 },
+  { x: 0, y: -2, z: 10 },
+  { x: 15, y: -2, z: 15 },
+  { x: -15, y: -2, z: -15 },
+  { x: 0, y: -2, z: -10 },
+  { x: 15, y: -2, z: -10 },
+  { x: 0, y: -2, z: 5 }
 ];
 function getPlayerSpawnPoint() {
   if (availableSpawnPoints.length < 1) return null;
@@ -115,7 +115,7 @@ export default class Arena {
     Object.keys(this.players).forEach(playerId => {
       this.players[playerId].state = {
         position: getPlayerSpawnPoint(),
-        size: { width: 3, height: 3, depth: 3 },
+        size: { width: 1, height: 1, depth: 1 },
         health: 100,
         XP: 0
       };
