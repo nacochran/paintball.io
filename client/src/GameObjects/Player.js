@@ -97,7 +97,7 @@ export default class Player extends PhysicsEntity {
 
     const pistolShape = new Shape({
       type: "gltf",
-      url: "client/public/assets/gltf/pistol/pistol.glb",
+      url: "/assets/gltf/pistol/pistol.glb",
       size: { width: 1, height: 1, depth: 1 },
       position: new THREE.Vector3(0, 0, 0),
       collidable: false,
