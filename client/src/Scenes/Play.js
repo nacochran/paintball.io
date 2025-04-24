@@ -39,7 +39,7 @@ class Game {
 
     game_state.players.forEach(player => {
       const pos = player.state.position,
-            s = player.state.size;
+        s = player.state.size;
 
       if (player.id === socketManager.get_socket_id()) {
         const new_player = new Player(scene, {
@@ -65,7 +65,7 @@ class Game {
 
     game_state.blocks.forEach(block => {
       const pos = block.state.position,
-            s = block.state.size;
+        s = block.state.size;
 
       const new_block = new Block({
         position: new THREE.Vector3(pos.x, pos.y, pos.z),
@@ -123,12 +123,12 @@ class Game {
       const entityToUpdate = entity_dict[entity.id];
 
       if (!entityToUpdate || entityToUpdate.health <= 0) {
-        entityToUpdate?.destroy_mesh(scene);
-        if (!entityToUpdate) return;
-        if (entityToUpdate.id === game.player.id) {
+        if (entityToUpdate.id === game.player.id || !game.player.id) {
           socketManager.disconnect();
           sceneManager.createTransition('menu');
         }
+        entityToUpdate?.destroy_mesh(scene);
+        if (!entityToUpdate) return;
         const index = this.entities.indexOf(entityToUpdate);
         if (index !== -1) this.entities.splice(index, 1);
         delete entity_dict[entity.id];
@@ -205,7 +205,7 @@ const playScene = {
       game.pointerLockControls.lock();
     });
 
-    document.addEventListener('pointerlockerror', () => {});
+    document.addEventListener('pointerlockerror', () => { });
 
     game.setup();
   },
