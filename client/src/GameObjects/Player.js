@@ -35,7 +35,7 @@ export default class Player extends PhysicsEntity {
       this.shape.attach(this);
 
       this.weaponHolder = new THREE.Object3D();
-      this.weaponHolder.raycast = () => {};
+      this.weaponHolder.raycast = () => { };
       this.weaponHolder.name = "WeaponHolder";
       this.weaponHolder.position.set(0.3, this.eyeHeight, -0.6);
 
@@ -97,7 +97,7 @@ export default class Player extends PhysicsEntity {
 
     const pistolShape = new Shape({
       type: "gltf",
-      url: "/assets/gltf/pistol/pistol.glb",
+      url: "client/public/assets/gltf/pistol/pistol.glb",
       size: { width: 1, height: 1, depth: 1 },
       position: new THREE.Vector3(0, 0, 0),
       collidable: false,
