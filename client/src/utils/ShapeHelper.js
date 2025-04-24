@@ -1,5 +1,7 @@
 // Import Three.js and other dependencies
 import * as THREE from 'three';
+import { sRGBEncoding } from 'three/src/constants.js';
+
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import BoundingBox from '../utils/BoundingBox.js';
 import StaticEntity from '../GameObjects/StaticEntity.js';
