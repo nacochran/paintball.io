@@ -22,7 +22,7 @@
     "express": "^4.22.1",
     "express-session": "^1.18.1",
     "fs": "^0.0.1-security",
-    "nodemailer": "^6.10.0",
+    "nodemailer": "^7.0.11",
     "paintball-fps-server": "file:",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
